@@ -1,8 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
 
 // Reusable Icon component for the "Why Choose Us" section
 const FeatureIcon = ({
@@ -115,8 +113,7 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="bg-gray-900 text-white">
-      <Navbar />
+    <>
       {/* Hero Section */}
       <section
         className="relative h-[60vh] flex items-center justify-center text-center bg-cover bg-center"
@@ -212,7 +209,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      <Footer />
-    </div>
+    </>
   );
 }
