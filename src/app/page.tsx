@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { PromotionalBanner } from '@/components/ui';
 
 // Reusable Icon component for the "Why Choose Us" section
 const FeatureIcon = ({
@@ -43,7 +44,7 @@ const ProductCard = ({
   category: string;
 }) => (
   <div className="bg-gray-800 rounded-lg overflow-hidden group">
-    <Link href="/products/sample-product" className="block">
+    <Link href="/products" className="block">
       <Image
         src={image}
         alt={name}
@@ -62,10 +63,10 @@ const ProductCard = ({
 );
 
 export default function HomePage() {
-  const featuredProducts = [
+  const bestSellers = [
     {
-      name: 'Grade A Portland Cement',
-      price: '$8.99 / bag',
+      name: 'UltraGrade Portland Cement',
+      price: '$15.99 / bag',
       image: 'https://placehold.co/400x300/1F2937/FBBF24?text=Cement',
       category: 'Cement',
     },
@@ -77,15 +78,42 @@ export default function HomePage() {
     },
     {
       name: 'Red Clay Facing Bricks',
-      price: '$0.75 / brick',
+      price: '$250.00 / pack',
       image: 'https://placehold.co/400x300/1F2937/FBBF24?text=Bricks',
       category: 'Masonry',
     },
     {
-      name: 'Structural Pine Lumber',
-      price: '$12.00 / plank',
+      name: 'Construction Grade Lumber',
+      price: '$8.75 / plank',
       image: 'https://placehold.co/400x300/1F2937/FBBF24?text=Lumber',
       category: 'Wood',
+    },
+  ];
+
+  const newArrivals = [
+    {
+      name: 'PVC Drainage Pipe',
+      price: '$35.20 / pipe',
+      image: 'https://placehold.co/400x300/1F2937/FBBF24?text=PVC+Pipe',
+      category: 'Plumbing',
+    },
+    {
+      name: 'Asphalt Roofing Shingles',
+      price: '$42.00 / bundle',
+      image: 'https://placehold.co/400x300/1F2937/FBBF24?text=Shingles',
+      category: 'Roofing',
+    },
+    {
+      name: 'Concrete Mix Additive',
+      price: '$18.50 / gallon',
+      image: 'https://placehold.co/400x300/1F2937/FBBF24?text=Additive',
+      category: 'Concrete',
+    },
+    {
+      name: 'Insulation Foam Spray',
+      price: '$29.99 / can',
+      image: 'https://placehold.co/400x300/1F2937/FBBF24?text=Insulation',
+      category: 'Insulation',
     },
   ];
 
@@ -93,22 +121,22 @@ export default function HomePage() {
     {
       name: 'Cement & Concrete',
       image: 'https://placehold.co/400x400/1F2937/FBBF24?text=Cement',
-      href: '/products/cement',
+      href: '/products',
     },
     {
       name: 'Steel & Rebar',
       image: 'https://placehold.co/400x400/1F2937/FBBF24?text=Steel',
-      href: '/products/steel',
+      href: '/products',
     },
     {
       name: 'Bricks & Masonry',
       image: 'https://placehold.co/400x400/1F2937/FBBF24?text=Bricks',
-      href: '/products/masonry',
+      href: '/products',
     },
     {
       name: 'Lumber & Wood',
       image: 'https://placehold.co/400x400/1F2937/FBBF24?text=Wood',
-      href: '/products/wood',
+      href: '/products',
     },
   ];
 
@@ -165,12 +193,22 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Featured Products Section */}
+      {/* Promotional Banner */}
+      <PromotionalBanner
+        title="Special Construction Sale!"
+        description="Get 20% off on all cement and concrete products this month. Limited time offer - don't miss out on premium building materials at unbeatable prices."
+        ctaText="Shop Sale Items"
+        ctaLink="/products"
+        alignment="center"
+        backgroundImage="https://placehold.co/1600x600/1F2937/FBBF24?text=Construction+Sale"
+      />
+
+      {/* Best Sellers Section */}
       <section className="bg-gray-800 py-16 sm:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-10">Featured Products</h2>
+          <h2 className="text-3xl font-bold text-center mb-10">Best Sellers</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredProducts.map(product => (
+            {bestSellers.map(product => (
               <ProductCard key={product.name} {...product} />
             ))}
           </div>
@@ -179,7 +217,27 @@ export default function HomePage() {
               href="/products"
               className="border border-yellow-500 text-yellow-500 font-bold py-3 px-8 rounded-lg hover:bg-yellow-500 hover:text-gray-900 transition-colors"
             >
-              View All Products
+              View All Best Sellers
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* New Arrivals Section */}
+      <section className="py-16 sm:py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-center mb-10">New Arrivals</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {newArrivals.map(product => (
+              <ProductCard key={product.name} {...product} />
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <Link
+              href="/products"
+              className="bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-lg hover:bg-yellow-400 transition-colors"
+            >
+              View All New Arrivals
             </Link>
           </div>
         </div>

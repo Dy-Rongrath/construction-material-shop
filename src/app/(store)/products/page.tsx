@@ -1,35 +1,162 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
+import { ChevronDown, List, Grid, Search } from 'lucide-react';
 import { useCart } from '@/lib/hooks';
 
-// Reusable Icon component
-const Icon = ({ path, className = 'w-6 h-6' }: { path: string; className?: string }) => (
-  <svg
-    className={className}
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={path} />
-  </svg>
-);
+// --- TYPES ---
+interface Product {
+  id: number;
+  name: string;
+  category: string;
+  price: number;
+  brand: string;
+  rating: number;
+  imageUrl: string;
+  spec: string;
+}
 
-// Product Card Component
-const ProductCard = ({
-  product,
-}: {
-  product: {
-    id: number;
-    name: string;
-    price: number;
-    imageUrl: string;
-    tag: string;
-    shortDescription: string;
-  };
-}) => {
+interface Filters {
+  search: string;
+  categories: Set<string>;
+  brands: Set<string>;
+  minPrice: number | null;
+  maxPrice: number | null;
+}
+
+// --- MOCK DATA ---
+// In a real application, you would fetch this from your database.
+const allProducts: Product[] = [
+  {
+    id: 1,
+    name: 'OPC Grade 53 Cement',
+    category: 'Cement',
+    price: 350,
+    brand: 'UltraTech',
+    rating: 4.5,
+    imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Cement',
+    spec: '50kg Bag',
+  },
+  {
+    id: 2,
+    name: 'TMT Steel Rebar',
+    category: 'Steel',
+    price: 5500,
+    brand: 'TATA Tiscon',
+    rating: 4.8,
+    imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Steel',
+    spec: '12mm Rod',
+  },
+  {
+    id: 3,
+    name: 'Waterproofing Compound',
+    category: 'Chemicals',
+    price: 800,
+    brand: 'Dr. Fixit',
+    rating: 4.6,
+    imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Chemical',
+    spec: '20L Can',
+  },
+  {
+    id: 4,
+    name: 'PPC Cement',
+    category: 'Cement',
+    price: 320,
+    brand: 'Ambuja',
+    rating: 4.4,
+    imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Cement',
+    spec: '50kg Bag',
+  },
+  {
+    id: 5,
+    name: 'Fe 500D TMT Bar',
+    category: 'Steel',
+    price: 5800,
+    brand: 'JSW Neosteel',
+    rating: 4.7,
+    imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Steel',
+    spec: '16mm Rod',
+  },
+  {
+    id: 6,
+    name: 'Construction Plywood',
+    category: 'Lumber',
+    price: 1200,
+    brand: 'CenturyPly',
+    rating: 4.3,
+    imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Lumber',
+    spec: '18mm Sheet',
+  },
+  {
+    id: 7,
+    name: 'Ready Mix Concrete',
+    category: 'Concrete',
+    price: 4500,
+    brand: 'ACC',
+    rating: 4.9,
+    imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Concrete',
+    spec: 'M25 Grade',
+  },
+  {
+    id: 8,
+    name: 'Ceramic Wall Tiles',
+    category: 'Tiles',
+    price: 45,
+    brand: 'Kajaria',
+    rating: 4.2,
+    imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Tiles',
+    spec: 'per sq. ft.',
+  },
+  {
+    id: 9,
+    name: 'Plastic Emulsion Paint',
+    category: 'Paint',
+    price: 2500,
+    brand: 'Asian Paints',
+    rating: 4.8,
+    imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Paint',
+    spec: '20L Bucket',
+  },
+  {
+    id: 10,
+    name: 'Teak Wood Plank',
+    category: 'Lumber',
+    price: 3500,
+    brand: 'Generic Wood',
+    rating: 4.5,
+    imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Lumber',
+    spec: '8ft x 4in',
+  },
+  {
+    id: 11,
+    name: 'Adhesive Mortar',
+    category: 'Chemicals',
+    price: 550,
+    brand: 'Weber',
+    rating: 4.6,
+    imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Chemical',
+    spec: '20kg Bag',
+  },
+];
+
+const categories = ['All', 'Cement', 'Steel', 'Chemicals', 'Lumber', 'Concrete', 'Tiles', 'Paint'];
+const brands = [
+  'All',
+  'UltraTech',
+  'TATA Tiscon',
+  'Dr. Fixit',
+  'Ambuja',
+  'JSW Neosteel',
+  'CenturyPly',
+  'ACC',
+  'Kajaria',
+  'Asian Paints',
+];
+
+// --- Sub-components for better organization ---
+
+const ProductCard = ({ product, view }: { product: Product; view: string }) => {
   const { dispatch } = useCart();
 
   const handleAddToCart = () => {
@@ -44,31 +171,61 @@ const ProductCard = ({
     });
   };
 
-  return (
-    <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg group flex flex-col">
-      <div className="relative">
-        <div className="relative w-full h-56">
+  if (view === 'list') {
+    return (
+      <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col md:flex-row items-center w-full transition-transform duration-300 hover:scale-105 hover:shadow-yellow-500/20">
+        <div className="relative w-full md:w-48 h-48">
           <Image
             src={product.imageUrl}
             alt={product.name}
             fill
-            unoptimized
             className="object-cover"
+            unoptimized
           />
         </div>
-        <div className="absolute top-0 right-0 bg-yellow-500 text-gray-900 font-bold px-3 py-1 m-2 rounded-md text-sm">
-          {product.tag}
+        <div className="p-6 flex-grow">
+          <p className="text-sm text-yellow-400 mb-1">{product.category}</p>
+          <h3 className="text-xl font-bold text-white mb-2">{product.name}</h3>
+          <p className="text-gray-400 text-sm mb-3">
+            {product.brand} - {product.spec}
+          </p>
+          <div className="flex items-center mb-4">
+            {/* Star rating component can be added here */}
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-2xl font-black text-white">₹{product.price.toLocaleString()}</p>
+            <button
+              onClick={handleAddToCart}
+              className="bg-yellow-500 text-gray-900 font-bold py-2 px-4 rounded-md hover:bg-yellow-400 transition-colors"
+            >
+              Add to Cart
+            </button>
+          </div>
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col h-full transition-transform duration-300 hover:scale-105 hover:shadow-yellow-500/20">
+      <div className="relative w-full h-48">
+        <Image
+          src={product.imageUrl}
+          alt={product.name}
+          fill
+          className="object-cover"
+          unoptimized
+        />
+      </div>
       <div className="p-6 flex flex-col flex-grow">
-        <h3 className="text-xl font-bold text-white mb-2 truncate">{product.name}</h3>
-        <p className="text-gray-400 mb-4 flex-grow">{product.shortDescription}</p>
-        <div className="flex justify-between items-center mt-auto">
-          <p className="text-2xl font-extrabold text-yellow-400">${product.price.toFixed(2)}</p>
+        <p className="text-sm text-yellow-400 mb-1">{product.category}</p>
+        <h3 className="text-xl font-bold text-white mb-2 flex-grow">{product.name}</h3>
+        <p className="text-gray-400 text-sm mb-4">{product.brand}</p>
+        <div className="flex items-center justify-between mt-auto">
+          <p className="text-2xl font-black text-white">₹{product.price.toLocaleString()}</p>
           <button
-            type="button"
             onClick={handleAddToCart}
-            className="bg-gray-700 text-white py-2 px-4 rounded-lg hover:bg-yellow-500 hover:text-gray-900 transition-colors flex items-center gap-2 cursor-pointer"
+            className="bg-yellow-500 text-gray-900 font-bold py-2 px-4 rounded-md hover:bg-yellow-400 transition-colors"
           >
             Add
           </button>
@@ -78,99 +235,261 @@ const ProductCard = ({
   );
 };
 
-// Main Product Listing Page Component
-export default function ProductsPage() {
-  // In a real app, this data would be fetched from your database/API
-  const mockProducts = [
-    {
-      id: 1,
-      name: 'UltraGrade Portland Cement',
-      price: 15.99,
-      imageUrl: 'https://placehold.co/600x400/334155/eab308?text=Cement',
-      tag: 'Best Seller',
-      shortDescription: 'High-strength cement for all construction needs.',
-    },
-    {
-      id: 2,
-      name: 'Reinforced Steel Rebar (10ft)',
-      price: 25.5,
-      imageUrl: 'https://placehold.co/600x400/334155/eab308?text=Rebar',
-      tag: 'New',
-      shortDescription: 'Grade 60 steel for maximum structural integrity.',
-    },
-    {
-      id: 3,
-      name: 'Red Clay Facing Bricks (Pack of 500)',
-      price: 250.0,
-      imageUrl: 'https://placehold.co/600x400/334155/eab308?text=Bricks',
-      tag: 'Bulk Deal',
-      shortDescription: 'Durable and weatherproof, perfect for exteriors.',
-    },
-    {
-      id: 4,
-      name: 'Construction Grade Lumber (2x4x8)',
-      price: 8.75,
-      imageUrl: 'https://placehold.co/600x400/334155/eab308?text=Lumber',
-      tag: 'On Sale',
-      shortDescription: 'Kiln-dried pine for framing and general projects.',
-    },
-    {
-      id: 5,
-      name: 'PVC Drainage Pipe (4-inch)',
-      price: 35.2,
-      imageUrl: 'https://placehold.co/600x400/334155/eab308?text=Pipe',
-      tag: 'New',
-      shortDescription: 'Heavy-duty PVC for residential and commercial drainage.',
-    },
-    {
-      id: 6,
-      name: 'Asphalt Roofing Shingles (3-Tab)',
-      price: 42.0,
-      imageUrl: 'https://placehold.co/600x400/334155/eab308?text=Shingles',
-      tag: 'Weatherproof',
-      shortDescription: '25-year warranty architectural shingles.',
-    },
-  ];
+const FilterSidebar = ({
+  filters,
+  setFilters,
+}: {
+  filters: Filters;
+  setFilters: React.Dispatch<React.SetStateAction<Filters>>;
+}) => {
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value === '' ? null : Number(e.target.value);
+    setFilters(prev => ({ ...prev, [e.target.name]: value }));
+  };
+
+  const handleCheckboxChange = (
+    type: keyof Pick<Filters, 'categories' | 'brands'>,
+    value: string
+  ) => {
+    setFilters(prev => {
+      const current = prev[type] as Set<string>;
+      const newSet = new Set(current);
+      if (newSet.has(value)) {
+        newSet.delete(value);
+      } else {
+        newSet.add(value);
+      }
+      return { ...prev, [type]: newSet };
+    });
+  };
+
+  return (
+    <aside className="w-full lg:w-1/4 xl:w-1/5 p-6 bg-gray-800 rounded-lg shadow-lg">
+      <h3 className="text-2xl font-bold text-white mb-6 border-b-2 border-yellow-500 pb-2">
+        Filters
+      </h3>
+
+      {/* Category Filter */}
+      <div className="mb-6">
+        <h4 className="font-bold text-lg text-white mb-3">Category</h4>
+        {categories.slice(1).map(cat => (
+          <div key={cat} className="flex items-center mb-2">
+            <input
+              type="checkbox"
+              id={`cat-${cat}`}
+              checked={filters.categories.has(cat)}
+              onChange={() => handleCheckboxChange('categories', cat)}
+              className="w-4 h-4 text-yellow-500 bg-gray-700 border-gray-600 rounded focus:ring-yellow-600"
+            />
+            <label htmlFor={`cat-${cat}`} className="ml-2 text-gray-300">
+              {cat}
+            </label>
+          </div>
+        ))}
+      </div>
+
+      {/* Brand Filter */}
+      <div className="mb-6">
+        <h4 className="font-bold text-lg text-white mb-3">Brand</h4>
+        {brands.slice(1).map(brand => (
+          <div key={brand} className="flex items-center mb-2">
+            <input
+              type="checkbox"
+              id={`brand-${brand}`}
+              checked={filters.brands.has(brand)}
+              onChange={() => handleCheckboxChange('brands', brand)}
+              className="w-4 h-4 text-yellow-500 bg-gray-700 border-gray-600 rounded focus:ring-yellow-600"
+            />
+            <label htmlFor={`brand-${brand}`} className="ml-2 text-gray-300">
+              {brand}
+            </label>
+          </div>
+        ))}
+      </div>
+
+      {/* Price Filter */}
+      <div className="mb-6">
+        <h4 className="font-bold text-lg text-white mb-3">Price Range</h4>
+        <div className="flex items-center space-x-2">
+          <input
+            type="number"
+            name="minPrice"
+            placeholder="Min"
+            value={filters.minPrice ?? ''}
+            onChange={handlePriceChange}
+            className="w-full bg-gray-700 border border-gray-600 text-white rounded-md p-2 text-sm focus:ring-yellow-500 focus:border-yellow-500"
+          />
+          <span className="text-gray-400">-</span>
+          <input
+            type="number"
+            name="maxPrice"
+            placeholder="Max"
+            value={filters.maxPrice ?? ''}
+            onChange={handlePriceChange}
+            className="w-full bg-gray-700 border border-gray-600 text-white rounded-md p-2 text-sm focus:ring-yellow-500 focus:border-yellow-500"
+          />
+        </div>
+      </div>
+
+      <button
+        onClick={() =>
+          setFilters({
+            search: '',
+            categories: new Set(),
+            brands: new Set(),
+            minPrice: null,
+            maxPrice: null,
+          })
+        }
+        className="w-full bg-gray-600 text-white font-bold py-2 px-4 rounded-md hover:bg-gray-500 transition-colors"
+      >
+        Clear Filters
+      </button>
+    </aside>
+  );
+};
+
+export default function ProductCatalogPage() {
+  const [view, setView] = useState('grid'); // 'grid' or 'list'
+  const [sort, setSort] = useState('popularity'); // 'popularity', 'price-asc', 'price-desc', 'name-asc'
+  const [filters, setFilters] = useState<Filters>({
+    search: '',
+    categories: new Set<string>(),
+    brands: new Set<string>(),
+    minPrice: null,
+    maxPrice: null,
+  });
+
+  const filteredAndSortedProducts = useMemo(() => {
+    let products = allProducts;
+
+    // Filtering logic
+    products = products.filter(p => {
+      const { search, categories, brands, minPrice, maxPrice } = filters;
+      if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
+      if (categories.size > 0 && !categories.has(p.category)) return false;
+      if (brands.size > 0 && !brands.has(p.brand)) return false;
+      if (minPrice != null && p.price < minPrice) return false;
+      if (maxPrice != null && p.price > maxPrice) return false;
+      return true;
+    });
+
+    // Sorting logic
+    switch (sort) {
+      case 'price-asc':
+        products.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-desc':
+        products.sort((a, b) => b.price - a.price);
+        break;
+      case 'name-asc':
+        products.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case 'popularity':
+      default:
+        products.sort((a, b) => b.rating - a.rating); // Assuming rating is popularity
+        break;
+    }
+
+    return products;
+  }, [filters, sort]);
 
   return (
     <div className="bg-gray-900 text-white min-h-screen">
-      <div className="container mx-auto px-6 py-8">
-        <h1 className="text-4xl font-extrabold text-center mb-4">Our Products</h1>
-        <p className="text-gray-400 text-center mb-10 max-w-2xl mx-auto">
-          Browse our extensive catalog of high-quality construction materials.
-        </p>
-
-        {/* Filters Section */}
-        <div className="bg-gray-800 p-4 rounded-lg mb-8 flex flex-col md:flex-row gap-4 items-center">
-          <div className="flex items-center gap-2">
-            <Icon path="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zM3 16a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" />
-            <span className="font-bold">Filters:</span>
-          </div>
-          {/* Filter 1: Category */}
-          <select className="bg-gray-700 border border-gray-600 rounded-md px-4 py-2 w-full md:w-auto">
-            <option>All Categories</option>
-            <option>Cement & Concrete</option>
-            <option>Lumber & Wood</option>
-            <option>Steel & Rebar</option>
-            <option>Bricks & Masonry</option>
-          </select>
-          {/* Filter 2: Price Range */}
-          <select className="bg-gray-700 border border-gray-600 rounded-md px-4 py-2 w-full md:w-auto">
-            <option>Any Price</option>
-            <option>$0 - $50</option>
-            <option>$50 - $200</option>
-            <option>$200+</option>
-          </select>
-          <button className="bg-yellow-500 text-gray-900 font-bold py-2 px-6 rounded-lg hover:bg-yellow-400 transition-colors w-full md:w-auto">
-            Apply
-          </button>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Page Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white">
+            Our Products
+          </h1>
+          <p className="mt-4 max-w-2xl mx-auto text-lg text-gray-400">
+            Find all the construction materials you need for your next project.
+          </p>
         </div>
 
-        {/* Products Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {mockProducts.map(product => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Filters Sidebar */}
+          <FilterSidebar filters={filters} setFilters={setFilters} />
+
+          {/* Main Content */}
+          <main className="w-full">
+            {/* Toolbar: Search, Sort, View Toggle */}
+            <div className="bg-gray-800 p-4 rounded-lg shadow-lg mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="relative w-full sm:w-auto flex-grow">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={filters.search}
+                  onChange={e => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                  className="w-full bg-gray-700 border border-gray-600 text-white rounded-md py-2 pl-10 pr-4 focus:ring-yellow-500 focus:border-yellow-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-4">
+                {/* Sort Dropdown */}
+                <div className="relative">
+                  <select
+                    value={sort}
+                    onChange={e => setSort(e.target.value)}
+                    className="appearance-none bg-gray-700 border border-gray-600 text-white rounded-md py-2 pl-3 pr-8 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
+                  >
+                    <option value="popularity">Popularity</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                    <option value="name-asc">Name: A to Z</option>
+                  </select>
+                  <ChevronDown
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400"
+                    size={20}
+                  />
+                </div>
+
+                {/* View Toggle */}
+                <div className="flex items-center bg-gray-700 rounded-md">
+                  <button
+                    onClick={() => setView('grid')}
+                    className={`p-2 rounded-l-md ${view === 'grid' ? 'bg-yellow-500 text-gray-900' : 'text-gray-400 hover:bg-gray-600'}`}
+                  >
+                    <Grid size={20} />
+                  </button>
+                  <button
+                    onClick={() => setView('list')}
+                    className={`p-2 rounded-r-md ${view === 'list' ? 'bg-yellow-500 text-gray-900' : 'text-gray-400 hover:bg-gray-600'}`}
+                  >
+                    <List size={20} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Product Display */}
+            {filteredAndSortedProducts.length > 0 ? (
+              <div
+                className={
+                  view === 'grid'
+                    ? 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6'
+                    : 'flex flex-col gap-6'
+                }
+              >
+                {filteredAndSortedProducts.map(product => (
+                  <ProductCard key={product.id} product={product} view={view} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16 bg-gray-800 rounded-lg">
+                <h3 className="text-2xl font-bold text-white">No Products Found</h3>
+                <p className="text-gray-400 mt-2">
+                  Try adjusting your filters to find what you&apos;re looking for.
+                </p>
+              </div>
+            )}
+
+            {/* Pagination would go here */}
+          </main>
         </div>
       </div>
     </div>
