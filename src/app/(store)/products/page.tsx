@@ -2,19 +2,24 @@
 
 import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
-import { ChevronDown, List, Grid, Search } from 'lucide-react';
+import Link from 'next/link';
+import { ChevronDown, List, Grid, Search, Star, Eye } from 'lucide-react';
 import { useCart } from '@/lib/hooks';
 
 // --- TYPES ---
 interface Product {
   id: number;
+  slug: string;
   name: string;
   category: string;
   price: number;
   brand: string;
   rating: number;
+  reviews: number;
   imageUrl: string;
   spec: string;
+  description: string;
+  inStock: boolean;
 }
 
 interface Filters {
@@ -30,113 +35,165 @@ interface Filters {
 const allProducts: Product[] = [
   {
     id: 1,
+    slug: 'opc-grade-53-cement',
     name: 'OPC Grade 53 Cement',
     category: 'Cement',
     price: 350,
     brand: 'UltraTech',
     rating: 4.5,
+    reviews: 120,
     imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Cement',
     spec: '50kg Bag',
+    description:
+      'UltraTech OPC 53 Grade is a high-strength, high-performance cement suitable for all types of construction.',
+    inStock: true,
   },
   {
     id: 2,
+    slug: 'tmt-steel-rebar',
     name: 'TMT Steel Rebar',
     category: 'Steel',
     price: 5500,
     brand: 'TATA Tiscon',
     rating: 4.8,
+    reviews: 250,
     imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Steel',
     spec: '12mm Rod',
+    description:
+      'TATA Tiscon 550SD (Super Ductile) is a new-generation rebar with advanced seismic resistance.',
+    inStock: true,
   },
   {
     id: 3,
+    slug: 'waterproofing-compound',
     name: 'Waterproofing Compound',
     category: 'Chemicals',
     price: 800,
     brand: 'Dr. Fixit',
     rating: 4.6,
+    reviews: 85,
     imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Chemical',
     spec: '20L Can',
+    description:
+      'Dr. Fixit waterproofing compound provides excellent waterproofing solutions for concrete structures.',
+    inStock: true,
   },
   {
     id: 4,
+    slug: 'ppc-cement',
     name: 'PPC Cement',
     category: 'Cement',
     price: 320,
     brand: 'Ambuja',
     rating: 4.4,
+    reviews: 95,
     imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Cement',
     spec: '50kg Bag',
+    description:
+      'Ambuja PPC Cement is a premium quality Portland Pozzolana Cement for construction.',
+    inStock: true,
   },
   {
     id: 5,
+    slug: 'fe-500d-tmt-bar',
     name: 'Fe 500D TMT Bar',
     category: 'Steel',
     price: 5800,
     brand: 'JSW Neosteel',
     rating: 4.7,
+    reviews: 180,
     imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Steel',
     spec: '16mm Rod',
+    description:
+      'JSW Neosteel Fe 500D TMT bars offer superior strength and ductility for construction.',
+    inStock: true,
   },
   {
     id: 6,
+    slug: 'construction-plywood',
     name: 'Construction Plywood',
     category: 'Lumber',
     price: 1200,
     brand: 'CenturyPly',
     rating: 4.3,
+    reviews: 75,
     imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Lumber',
     spec: '18mm Sheet',
+    description:
+      'CenturyPly construction plywood is engineered for superior strength and durability.',
+    inStock: true,
   },
   {
     id: 7,
+    slug: 'ready-mix-concrete',
     name: 'Ready Mix Concrete',
     category: 'Concrete',
     price: 4500,
     brand: 'ACC',
     rating: 4.9,
+    reviews: 200,
     imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Concrete',
     spec: 'M25 Grade',
+    description: 'ACC Ready Mix Concrete M25 Grade provides consistent quality and strength.',
+    inStock: true,
   },
   {
     id: 8,
+    slug: 'ceramic-wall-tiles',
     name: 'Ceramic Wall Tiles',
     category: 'Tiles',
     price: 45,
     brand: 'Kajaria',
     rating: 4.2,
+    reviews: 150,
     imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Tiles',
     spec: 'per sq. ft.',
+    description:
+      'Kajaria ceramic wall tiles offer elegant design and superior quality for interiors.',
+    inStock: true,
   },
   {
     id: 9,
+    slug: 'plastic-emulsion-paint',
     name: 'Plastic Emulsion Paint',
     category: 'Paint',
     price: 2500,
     brand: 'Asian Paints',
     rating: 4.8,
+    reviews: 300,
     imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Paint',
     spec: '20L Bucket',
+    description: 'Asian Paints plastic emulsion paint provides excellent coverage and durability.',
+    inStock: true,
   },
   {
     id: 10,
+    slug: 'teak-wood-plank',
     name: 'Teak Wood Plank',
     category: 'Lumber',
     price: 3500,
     brand: 'Generic Wood',
     rating: 4.5,
+    reviews: 60,
     imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Lumber',
     spec: '8ft x 4in',
+    description: 'Premium teak wood planks for high-quality furniture and construction work.',
+    inStock: true,
   },
   {
     id: 11,
+    slug: 'adhesive-mortar',
     name: 'Adhesive Mortar',
     category: 'Chemicals',
     price: 550,
     brand: 'Weber',
     rating: 4.6,
+    reviews: 90,
     imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Chemical',
     spec: '20kg Bag',
+    description:
+      'Weber adhesive mortar provides strong bonding for tiles and construction applications.',
+    inStock: true,
   },
 ];
 
@@ -171,6 +228,17 @@ const ProductCard = ({ product, view }: { product: Product; view: string }) => {
     });
   };
 
+  const renderStars = (rating: number) => {
+    return [...Array(5)].map((_, i) => (
+      <Star
+        key={i}
+        size={14}
+        fill={i < Math.round(rating) ? 'currentColor' : 'none'}
+        className={i < Math.round(rating) ? 'text-yellow-400' : 'text-gray-600'}
+      />
+    ));
+  };
+
   if (view === 'list') {
     return (
       <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col md:flex-row items-center w-full transition-transform duration-300 hover:scale-105 hover:shadow-yellow-500/20">
@@ -184,22 +252,46 @@ const ProductCard = ({ product, view }: { product: Product; view: string }) => {
           />
         </div>
         <div className="p-6 flex-grow">
-          <p className="text-sm text-yellow-400 mb-1">{product.category}</p>
+          <div className="flex items-start justify-between mb-2">
+            <p className="text-sm text-yellow-400 font-semibold">{product.category}</p>
+            <Link
+              href={`/products/${product.slug}`}
+              className="text-gray-400 hover:text-yellow-400 transition-colors"
+            >
+              <Eye size={16} />
+            </Link>
+          </div>
           <h3 className="text-xl font-bold text-white mb-2">{product.name}</h3>
-          <p className="text-gray-400 text-sm mb-3">
+          <p className="text-gray-400 text-sm mb-2">
             {product.brand} - {product.spec}
           </p>
-          <div className="flex items-center mb-4">
-            {/* Star rating component can be added here */}
+          <p className="text-gray-300 text-sm mb-3 line-clamp-2">{product.description}</p>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-1">{renderStars(product.rating)}</div>
+            <span className="text-gray-400 text-sm">({product.reviews} reviews)</span>
           </div>
           <div className="flex items-center justify-between">
-            <p className="text-2xl font-black text-white">₹{product.price.toLocaleString()}</p>
-            <button
-              onClick={handleAddToCart}
-              className="bg-yellow-500 text-gray-900 font-bold py-2 px-4 rounded-md hover:bg-yellow-400 transition-colors"
-            >
-              Add to Cart
-            </button>
+            <div>
+              <p className="text-2xl font-black text-white">₹{product.price.toLocaleString()}</p>
+              <p className={`text-sm ${product.inStock ? 'text-green-400' : 'text-red-400'}`}>
+                {product.inStock ? 'In Stock' : 'Out of Stock'}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Link
+                href={`/products/${product.slug}`}
+                className="bg-gray-600 text-white font-bold py-2 px-3 rounded-md hover:bg-gray-500 transition-colors text-sm"
+              >
+                View Details
+              </Link>
+              <button
+                onClick={handleAddToCart}
+                disabled={!product.inStock}
+                className="bg-yellow-500 text-gray-900 font-bold py-2 px-4 rounded-md hover:bg-yellow-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Add to Cart
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -216,19 +308,46 @@ const ProductCard = ({ product, view }: { product: Product; view: string }) => {
           className="object-cover"
           unoptimized
         />
+        <Link
+          href={`/products/${product.slug}`}
+          className="absolute top-2 right-2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
+        >
+          <Eye size={16} />
+        </Link>
       </div>
       <div className="p-6 flex flex-col flex-grow">
-        <p className="text-sm text-yellow-400 mb-1">{product.category}</p>
-        <h3 className="text-xl font-bold text-white mb-2 flex-grow">{product.name}</h3>
-        <p className="text-gray-400 text-sm mb-4">{product.brand}</p>
+        <div className="flex items-start justify-between mb-1">
+          <p className="text-sm text-yellow-400 font-semibold">{product.category}</p>
+          <span
+            className={`text-xs px-2 py-1 rounded-full ${product.inStock ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}
+          >
+            {product.inStock ? 'In Stock' : 'Out of Stock'}
+          </span>
+        </div>
+        <h3 className="text-lg font-bold text-white mb-2 flex-grow line-clamp-2">{product.name}</h3>
+        <p className="text-gray-400 text-sm mb-2">{product.brand}</p>
+        <p className="text-gray-300 text-sm mb-3 line-clamp-2">{product.description}</p>
+        <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-1">{renderStars(product.rating)}</div>
+          <span className="text-gray-400 text-xs">({product.reviews})</span>
+        </div>
         <div className="flex items-center justify-between mt-auto">
           <p className="text-2xl font-black text-white">₹{product.price.toLocaleString()}</p>
-          <button
-            onClick={handleAddToCart}
-            className="bg-yellow-500 text-gray-900 font-bold py-2 px-4 rounded-md hover:bg-yellow-400 transition-colors"
-          >
-            Add
-          </button>
+          <div className="flex gap-2">
+            <Link
+              href={`/products/${product.slug}`}
+              className="bg-gray-600 text-white font-bold py-1 px-2 rounded-md hover:bg-gray-500 transition-colors text-xs"
+            >
+              View
+            </Link>
+            <button
+              onClick={handleAddToCart}
+              disabled={!product.inStock}
+              className="bg-yellow-500 text-gray-900 font-bold py-1 px-3 rounded-md hover:bg-yellow-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              Add
+            </button>
+          </div>
         </div>
       </div>
     </div>
