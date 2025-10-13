@@ -2,8 +2,16 @@
 
 import React, { useState } from 'react';
 
+// TypeScript interface for FAQ item props
+interface FaqItemProps {
+  question: string;
+  answer: string;
+  isOpen: boolean;
+  onClick: () => void;
+}
+
 // Reusable component for a single FAQ item
-const FaqItem = ({ question, answer, isOpen, onClick }) => {
+const FaqItem: React.FC<FaqItemProps> = ({ question, answer, isOpen, onClick }) => {
   return (
     <div className="py-6 border-b border-gray-700">
       <dt>
@@ -37,9 +45,9 @@ const FaqItem = ({ question, answer, isOpen, onClick }) => {
 };
 
 export default function FaqPage() {
-  const [openIndex, setOpenIndex] = useState(null);
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
 
-  const handleToggle = index => {
+  const handleToggle = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
   };
 
