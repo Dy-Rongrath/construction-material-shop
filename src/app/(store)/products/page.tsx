@@ -45,7 +45,7 @@ const ProductCard = ({
   };
 
   return (
-    <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg group transform hover:-translate-y-2 transition-transform duration-300 flex flex-col">
+    <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg group flex flex-col">
       <div className="relative">
         <div className="relative w-full h-56">
           <Image
@@ -66,13 +66,10 @@ const ProductCard = ({
         <div className="flex justify-between items-center mt-auto">
           <p className="text-2xl font-extrabold text-yellow-400">${product.price.toFixed(2)}</p>
           <button
+            type="button"
             onClick={handleAddToCart}
-            className="bg-gray-700 text-white py-2 px-4 rounded-lg hover:bg-yellow-500 hover:text-gray-900 transition-colors flex items-center gap-2"
+            className="bg-gray-700 text-white py-2 px-4 rounded-lg hover:bg-yellow-500 hover:text-gray-900 transition-colors flex items-center gap-2 cursor-pointer"
           >
-            <Icon
-              path="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-              className="w-5 h-5"
-            />
             Add
           </button>
         </div>
