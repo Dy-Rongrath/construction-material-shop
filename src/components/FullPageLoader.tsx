@@ -4,6 +4,9 @@ import { Wrench } from 'lucide-react';
  * A full-screen overlay loader.
  * Ideal for initial app loading or full page transitions where you want to block UI interaction.
  * Usage: Place this component conditionally in your root layout.
+ *
+ * Note: This component uses position: fixed which may cause Next.js to skip auto-scroll
+ * behavior during navigation. This is expected behavior for full-screen overlays.
  */
 export default function FullPageLoader() {
   return (

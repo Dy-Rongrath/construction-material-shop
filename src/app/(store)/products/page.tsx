@@ -1,27 +1,14 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronDown, List, Grid, Search, Star, Eye } from 'lucide-react';
 import { useCart } from '@/lib/hooks';
+import { useSearchParams } from 'next/navigation';
 import ProductGridSkeleton from '@/components/ProductGridSkeleton';
-
-// --- TYPES ---
-interface Product {
-  id: number;
-  slug: string;
-  name: string;
-  category: string;
-  price: number;
-  brand: string;
-  rating: number;
-  reviews: number;
-  imageUrl: string;
-  spec: string;
-  description: string;
-  inStock: boolean;
-}
+import { Product, allProducts, getCategories, getBrands } from '@/lib/products';
+import { Breadcrumbs, Pagination } from '@/components';
 
 interface Filters {
   search: string;
@@ -33,184 +20,8 @@ interface Filters {
 
 // --- MOCK DATA ---
 // In a real application, you would fetch this from your database.
-const allProducts: Product[] = [
-  {
-    id: 1,
-    slug: 'opc-grade-53-cement',
-    name: 'OPC Grade 53 Cement',
-    category: 'Cement',
-    price: 350,
-    brand: 'UltraTech',
-    rating: 4.5,
-    reviews: 120,
-    imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Cement',
-    spec: '50kg Bag',
-    description:
-      'UltraTech OPC 53 Grade is a high-strength, high-performance cement suitable for all types of construction.',
-    inStock: true,
-  },
-  {
-    id: 2,
-    slug: 'tmt-steel-rebar',
-    name: 'TMT Steel Rebar',
-    category: 'Steel',
-    price: 5500,
-    brand: 'TATA Tiscon',
-    rating: 4.8,
-    reviews: 250,
-    imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Steel',
-    spec: '12mm Rod',
-    description:
-      'TATA Tiscon 550SD (Super Ductile) is a new-generation rebar with advanced seismic resistance.',
-    inStock: true,
-  },
-  {
-    id: 3,
-    slug: 'waterproofing-compound',
-    name: 'Waterproofing Compound',
-    category: 'Chemicals',
-    price: 800,
-    brand: 'Dr. Fixit',
-    rating: 4.6,
-    reviews: 85,
-    imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Chemical',
-    spec: '20L Can',
-    description:
-      'Dr. Fixit waterproofing compound provides excellent waterproofing solutions for concrete structures.',
-    inStock: true,
-  },
-  {
-    id: 4,
-    slug: 'ppc-cement',
-    name: 'PPC Cement',
-    category: 'Cement',
-    price: 320,
-    brand: 'Ambuja',
-    rating: 4.4,
-    reviews: 95,
-    imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Cement',
-    spec: '50kg Bag',
-    description:
-      'Ambuja PPC Cement is a premium quality Portland Pozzolana Cement for construction.',
-    inStock: true,
-  },
-  {
-    id: 5,
-    slug: 'fe-500d-tmt-bar',
-    name: 'Fe 500D TMT Bar',
-    category: 'Steel',
-    price: 5800,
-    brand: 'JSW Neosteel',
-    rating: 4.7,
-    reviews: 180,
-    imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Steel',
-    spec: '16mm Rod',
-    description:
-      'JSW Neosteel Fe 500D TMT bars offer superior strength and ductility for construction.',
-    inStock: true,
-  },
-  {
-    id: 6,
-    slug: 'construction-plywood',
-    name: 'Construction Plywood',
-    category: 'Lumber',
-    price: 1200,
-    brand: 'CenturyPly',
-    rating: 4.3,
-    reviews: 75,
-    imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Lumber',
-    spec: '18mm Sheet',
-    description:
-      'CenturyPly construction plywood is engineered for superior strength and durability.',
-    inStock: true,
-  },
-  {
-    id: 7,
-    slug: 'ready-mix-concrete',
-    name: 'Ready Mix Concrete',
-    category: 'Concrete',
-    price: 4500,
-    brand: 'ACC',
-    rating: 4.9,
-    reviews: 200,
-    imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Concrete',
-    spec: 'M25 Grade',
-    description: 'ACC Ready Mix Concrete M25 Grade provides consistent quality and strength.',
-    inStock: true,
-  },
-  {
-    id: 8,
-    slug: 'ceramic-wall-tiles',
-    name: 'Ceramic Wall Tiles',
-    category: 'Tiles',
-    price: 45,
-    brand: 'Kajaria',
-    rating: 4.2,
-    reviews: 150,
-    imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Tiles',
-    spec: 'per sq. ft.',
-    description:
-      'Kajaria ceramic wall tiles offer elegant design and superior quality for interiors.',
-    inStock: true,
-  },
-  {
-    id: 9,
-    slug: 'plastic-emulsion-paint',
-    name: 'Plastic Emulsion Paint',
-    category: 'Paint',
-    price: 2500,
-    brand: 'Asian Paints',
-    rating: 4.8,
-    reviews: 300,
-    imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Paint',
-    spec: '20L Bucket',
-    description: 'Asian Paints plastic emulsion paint provides excellent coverage and durability.',
-    inStock: true,
-  },
-  {
-    id: 10,
-    slug: 'teak-wood-plank',
-    name: 'Teak Wood Plank',
-    category: 'Lumber',
-    price: 3500,
-    brand: 'Generic Wood',
-    rating: 4.5,
-    reviews: 60,
-    imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Lumber',
-    spec: '8ft x 4in',
-    description: 'Premium teak wood planks for high-quality furniture and construction work.',
-    inStock: true,
-  },
-  {
-    id: 11,
-    slug: 'adhesive-mortar',
-    name: 'Adhesive Mortar',
-    category: 'Chemicals',
-    price: 550,
-    brand: 'Weber',
-    rating: 4.6,
-    reviews: 90,
-    imageUrl: 'https://placehold.co/400x400/1a202c/ecc94b?text=Chemical',
-    spec: '20kg Bag',
-    description:
-      'Weber adhesive mortar provides strong bonding for tiles and construction applications.',
-    inStock: true,
-  },
-];
-
-const categories = ['All', 'Cement', 'Steel', 'Chemicals', 'Lumber', 'Concrete', 'Tiles', 'Paint'];
-const brands = [
-  'All',
-  'UltraTech',
-  'TATA Tiscon',
-  'Dr. Fixit',
-  'Ambuja',
-  'JSW Neosteel',
-  'CenturyPly',
-  'ACC',
-  'Kajaria',
-  'Asian Paints',
-];
+const categories = ['All', ...getCategories()];
+const brands = ['All', ...getBrands()];
 
 // --- Sub-components for better organization ---
 
@@ -264,7 +75,7 @@ const ProductCard = ({ product, view }: { product: Product; view: string }) => {
           </div>
           <h3 className="text-xl font-bold text-white mb-2">{product.name}</h3>
           <p className="text-gray-400 text-sm mb-2">
-            {product.brand} - {product.spec}
+            {product.brand} - {Object.values(product.specs)[0]}
           </p>
           <p className="text-gray-300 text-sm mb-3 line-clamp-2">{product.description}</p>
           <div className="flex items-center gap-2 mb-3">
@@ -469,17 +280,39 @@ const FilterSidebar = ({
   );
 };
 
-export default function ProductCatalogPage() {
+function ProductCatalogContent() {
+  const searchParams = useSearchParams();
   const [view, setView] = useState('grid'); // 'grid' or 'list'
   const [sort, setSort] = useState('popularity'); // 'popularity', 'price-asc', 'price-desc', 'name-asc'
   const [isLoading, setIsLoading] = useState(true); // Simulate loading state
-  const [filters, setFilters] = useState<Filters>({
-    search: '',
-    categories: new Set<string>(),
-    brands: new Set<string>(),
-    minPrice: null,
-    maxPrice: null,
+  const [currentPage, setCurrentPage] = useState(1); // Pagination state
+  const itemsPerPage = 6; // Number of products per page
+  const [filters, setFilters] = useState<Filters>(() => {
+    const categoryParam = searchParams.get('category');
+    const capitalizedCategory = categoryParam
+      ? categoryParam.charAt(0).toUpperCase() + categoryParam.slice(1)
+      : null;
+    return {
+      search: '',
+      categories: capitalizedCategory ? new Set([capitalizedCategory]) : new Set<string>(),
+      brands: new Set<string>(),
+      minPrice: null,
+      maxPrice: null,
+    };
   });
+
+  // Update filters when search params change
+  useEffect(() => {
+    const categoryParam = searchParams.get('category');
+    const capitalizedCategory = categoryParam
+      ? categoryParam.charAt(0).toUpperCase() + categoryParam.slice(1)
+      : null;
+
+    setFilters(prev => ({
+      ...prev,
+      categories: capitalizedCategory ? new Set([capitalizedCategory]) : new Set<string>(),
+    }));
+  }, [searchParams]);
 
   // Simulate loading state
   useEffect(() => {
@@ -490,7 +323,7 @@ export default function ProductCatalogPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  const filteredAndSortedProducts = useMemo(() => {
+  const { paginatedProducts, totalPages } = useMemo(() => {
     let products = allProducts;
 
     // Filtering logic
@@ -521,12 +354,32 @@ export default function ProductCatalogPage() {
         break;
     }
 
-    return products;
-  }, [filters, sort]);
+    // Pagination logic
+    const totalPages = Math.ceil(products.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedProducts = products.slice(startIndex, endIndex);
+
+    return { paginatedProducts, totalPages };
+  }, [filters, sort, currentPage, itemsPerPage]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <div className="bg-gray-900 text-white min-h-screen">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Breadcrumbs */}
+        <Breadcrumbs
+          items={[
+            { name: 'Home', href: '/' },
+            { name: 'Products', href: '#' },
+          ]}
+        />
+
         {/* Page Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white">
@@ -599,7 +452,7 @@ export default function ProductCatalogPage() {
             {/* Product Display */}
             {isLoading ? (
               <ProductGridSkeleton count={8} />
-            ) : filteredAndSortedProducts.length > 0 ? (
+            ) : paginatedProducts.length > 0 ? (
               <div
                 className={
                   view === 'grid'
@@ -607,7 +460,7 @@ export default function ProductCatalogPage() {
                     : 'flex flex-col gap-6'
                 }
               >
-                {filteredAndSortedProducts.map(product => (
+                {paginatedProducts.map((product: Product) => (
                   <ProductCard key={product.id} product={product} view={view} />
                 ))}
               </div>
@@ -620,10 +473,25 @@ export default function ProductCatalogPage() {
               </div>
             )}
 
-            {/* Pagination would go here */}
+            {/* Pagination */}
+            {!isLoading && totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            )}
           </main>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProductCatalogPage() {
+  return (
+    <Suspense fallback={<ProductGridSkeleton count={8} />}>
+      <ProductCatalogContent />
+    </Suspense>
   );
 }

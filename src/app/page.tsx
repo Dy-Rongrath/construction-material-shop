@@ -1,7 +1,11 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { PromotionalBanner } from '@/components/ui';
+import { getBestSellers, getNewArrivals, getCategories } from '@/lib/products';
+import { useCart } from '@/lib/hooks';
 
 // Reusable Icon component for the "Why Choose Us" section
 const FeatureIcon = ({
@@ -31,114 +35,175 @@ const FeatureIcon = ({
   </div>
 );
 
+// Category icons as inline SVG components
+const CategoryIcon = ({ category }: { category: string }) => {
+  const getIconForCategory = (cat: string) => {
+    switch (cat.toLowerCase()) {
+      case 'cement':
+        return (
+          <svg width="400" height="400" viewBox="0 0 400 400" className="w-full h-full">
+            <rect width="400" height="400" fill="#1F2937" />
+            <circle cx="200" cy="150" r="60" fill="#FBBF24" opacity="0.2" />
+            <circle cx="200" cy="150" r="40" fill="#FBBF24" opacity="0.4" />
+            <circle cx="200" cy="150" r="20" fill="#FBBF24" />
+            <rect x="150" y="250" width="100" height="60" fill="#FBBF24" opacity="0.8" />
+          </svg>
+        );
+      case 'steel':
+        return (
+          <svg width="400" height="400" viewBox="0 0 400 400" className="w-full h-full">
+            <rect width="400" height="400" fill="#1F2937" />
+            <rect x="140" y="120" width="120" height="160" fill="#FBBF24" opacity="0.1" />
+            <rect x="160" y="140" width="80" height="120" fill="#FBBF24" opacity="0.2" />
+            <rect x="180" y="160" width="40" height="80" fill="#FBBF24" />
+            <line x1="160" y1="200" x2="240" y2="200" stroke="#1F2937" strokeWidth="4" />
+            <line x1="200" y1="160" x2="200" y2="240" stroke="#1F2937" strokeWidth="4" />
+          </svg>
+        );
+      case 'lumber':
+        return (
+          <svg width="400" height="400" viewBox="0 0 400 400" className="w-full h-full">
+            <rect width="400" height="400" fill="#1F2937" />
+            <rect x="100" y="140" width="200" height="120" fill="#8B4513" />
+            <rect x="120" y="160" width="160" height="80" fill="#D2691E" />
+            <line x1="100" y1="170" x2="300" y2="170" stroke="#654321" strokeWidth="2" />
+            <line x1="100" y1="190" x2="300" y2="190" stroke="#654321" strokeWidth="2" />
+            <line x1="100" y1="210" x2="300" y2="210" stroke="#654321" strokeWidth="2" />
+            <line x1="100" y1="230" x2="300" y2="230" stroke="#654321" strokeWidth="2" />
+            <circle cx="200" cy="200" r="30" fill="#FBBF24" opacity="0.3" />
+          </svg>
+        );
+      case 'paints':
+        return (
+          <svg width="400" height="400" viewBox="0 0 400 400" className="w-full h-full">
+            <rect width="400" height="400" fill="#1F2937" />
+            <rect x="140" y="120" width="120" height="160" fill="#FBBF24" rx="8" />
+            <rect x="160" y="140" width="80" height="120" fill="#FF6B35" rx="4" />
+            <rect x="170" y="150" width="60" height="20" fill="#4ECDC4" />
+            <rect x="170" y="180" width="60" height="20" fill="#45B7D1" />
+            <rect x="170" y="210" width="60" height="20" fill="#96CEB4" />
+            <circle cx="200" cy="100" r="15" fill="#FBBF24" />
+            <rect x="185" y="85" width="30" height="15" fill="#FBBF24" rx="7" />
+          </svg>
+        );
+      case 'concrete':
+        return (
+          <svg width="400" height="400" viewBox="0 0 400 400" className="w-full h-full">
+            <rect width="400" height="400" fill="#1F2937" />
+            <rect x="120" y="160" width="160" height="80" fill="#A8A8A8" />
+            <circle cx="140" cy="180" r="8" fill="#808080" />
+            <circle cx="180" cy="190" r="6" fill="#808080" />
+            <circle cx="220" cy="185" r="7" fill="#808080" />
+            <circle cx="260" cy="195" r="5" fill="#808080" />
+            <circle cx="160" cy="210" r="6" fill="#808080" />
+            <circle cx="200" cy="215" r="7" fill="#808080" />
+            <circle cx="240" cy="205" r="5" fill="#808080" />
+            <rect x="120" y="140" width="160" height="20" fill="#FBBF24" opacity="0.6" />
+          </svg>
+        );
+      default:
+        return (
+          <svg width="400" height="400" viewBox="0 0 400 400" className="w-full h-full">
+            <rect width="400" height="400" fill="#1F2937" />
+            <circle cx="200" cy="200" r="80" fill="#FBBF24" opacity="0.3" />
+          </svg>
+        );
+    }
+  };
+
+  return getIconForCategory(category);
+};
+
 // Reusable component for a product card
 const ProductCard = ({
+  id,
   name,
   price,
   image,
   category,
+  slug,
 }: {
+  id: number;
   name: string;
   price: string;
   image: string;
   category: string;
-}) => (
-  <div className="bg-gray-800 rounded-lg overflow-hidden group">
-    <Link href="/products" className="block">
-      <Image
-        src={image}
-        alt={name}
-        width={400}
-        height={300}
-        className="w-full h-48 object-cover group-hover:opacity-80 transition-opacity"
-        unoptimized
-      />
+  slug: string;
+}) => {
+  const { dispatch } = useCart();
+
+  const handleAddToCart = () => {
+    dispatch({
+      type: 'ADD_ITEM',
+      payload: {
+        id,
+        name,
+        price: parseInt(price.replace(/[^\d]/g, '')), // Extract numeric price
+        imageUrl: image,
+      },
+    });
+  };
+
+  return (
+    <div className="bg-gray-800 rounded-lg overflow-hidden group">
+      <Link href={`/products/${slug}`} className="block">
+        <Image
+          src={image}
+          alt={name}
+          width={400}
+          height={300}
+          className="w-full h-48 object-cover group-hover:opacity-80 transition-opacity"
+          unoptimized
+        />
+      </Link>
       <div className="p-4">
         <p className="text-xs text-yellow-400 uppercase font-semibold">{category}</p>
         <h4 className="text-lg font-semibold text-white truncate mt-1">{name}</h4>
         <p className="text-white mt-2 font-bold text-xl">{price}</p>
+        <div className="flex gap-2 mt-3">
+          <Link
+            href={`/products/${slug}`}
+            className="flex-1 bg-gray-600 text-white font-bold py-2 px-3 rounded-md hover:bg-gray-500 transition-colors text-center text-sm"
+          >
+            View
+          </Link>
+          <button
+            onClick={handleAddToCart}
+            className="flex-1 bg-yellow-500 text-gray-900 font-bold py-2 px-3 rounded-md hover:bg-yellow-400 transition-colors text-sm"
+          >
+            Add to Cart
+          </button>
+        </div>
       </div>
-    </Link>
-  </div>
-);
+    </div>
+  );
+};
 
 export default function HomePage() {
-  const bestSellers = [
-    {
-      name: 'UltraGrade Portland Cement',
-      price: '$15.99 / bag',
-      image: 'https://placehold.co/400x300/1F2937/FBBF24?text=Cement',
-      category: 'Cement',
-    },
-    {
-      name: 'High-Tensile Steel Rebar',
-      price: '$25.50 / rod',
-      image: 'https://placehold.co/400x300/1F2937/FBBF24?text=Steel+Rebar',
-      category: 'Steel',
-    },
-    {
-      name: 'Red Clay Facing Bricks',
-      price: '$250.00 / pack',
-      image: 'https://placehold.co/400x300/1F2937/FBBF24?text=Bricks',
-      category: 'Masonry',
-    },
-    {
-      name: 'Construction Grade Lumber',
-      price: '$8.75 / plank',
-      image: 'https://placehold.co/400x300/1F2937/FBBF24?text=Lumber',
-      category: 'Wood',
-    },
-  ];
+  const bestSellers = getBestSellers(4).map(product => ({
+    id: product.id,
+    name: product.name,
+    price: `₹${product.price.toLocaleString()}`,
+    image: product.imageUrl,
+    category: product.category,
+    slug: product.slug,
+  }));
 
-  const newArrivals = [
-    {
-      name: 'PVC Drainage Pipe',
-      price: '$35.20 / pipe',
-      image: 'https://placehold.co/400x300/1F2937/FBBF24?text=PVC+Pipe',
-      category: 'Plumbing',
-    },
-    {
-      name: 'Asphalt Roofing Shingles',
-      price: '$42.00 / bundle',
-      image: 'https://placehold.co/400x300/1F2937/FBBF24?text=Shingles',
-      category: 'Roofing',
-    },
-    {
-      name: 'Concrete Mix Additive',
-      price: '$18.50 / gallon',
-      image: 'https://placehold.co/400x300/1F2937/FBBF24?text=Additive',
-      category: 'Concrete',
-    },
-    {
-      name: 'Insulation Foam Spray',
-      price: '$29.99 / can',
-      image: 'https://placehold.co/400x300/1F2937/FBBF24?text=Insulation',
-      category: 'Insulation',
-    },
-  ];
+  const newArrivals = getNewArrivals(4).map(product => ({
+    id: product.id,
+    name: product.name,
+    price: `₹${product.price.toLocaleString()}`,
+    image: product.imageUrl,
+    category: product.category,
+    slug: product.slug,
+  }));
 
-  const categories = [
-    {
-      name: 'Cement & Concrete',
-      image: 'https://placehold.co/400x400/1F2937/FBBF24?text=Cement',
-      href: '/products',
-    },
-    {
-      name: 'Steel & Rebar',
-      image: 'https://placehold.co/400x400/1F2937/FBBF24?text=Steel',
-      href: '/products',
-    },
-    {
-      name: 'Bricks & Masonry',
-      image: 'https://placehold.co/400x400/1F2937/FBBF24?text=Bricks',
-      href: '/products',
-    },
-    {
-      name: 'Lumber & Wood',
-      image: 'https://placehold.co/400x400/1F2937/FBBF24?text=Wood',
-      href: '/products',
-    },
-  ];
+  const categories = getCategories()
+    .slice(0, 4)
+    .map(category => ({
+      name: category,
+      href: `/products?category=${category.toLowerCase()}`,
+    }));
 
   return (
     <>
@@ -175,14 +240,7 @@ export default function HomePage() {
             {categories.map(category => (
               <Link key={category.name} href={category.href} className="group relative block">
                 <div className="aspect-square w-full overflow-hidden rounded-lg">
-                  <Image
-                    src={category.image}
-                    alt={category.name}
-                    width={400}
-                    height={400}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                    unoptimized
-                  />
+                  <CategoryIcon category={category.name} />
                 </div>
                 <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                   <h3 className="text-white text-lg font-bold text-center p-2">{category.name}</h3>

@@ -2,107 +2,130 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { Search, ShoppingCart, Menu, X, UserCircle, LayoutDashboard, LogOut } from 'lucide-react';
 import { useCart } from '@/lib/hooks';
 
-// Helper component for Icons
-const Icon = ({ path, className = 'w-6 h-6' }: { path: string; className?: string }) => (
-  <svg
-    className={className}
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={path} />
-  </svg>
-);
-
-// Navbar Component
-const Navbar = () => {
+export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { state } = useCart();
 
+  // --- STATE SIMULATION ---
+  // In a real app, this would come from an authentication context (e.g., useAuth() hook)
+  // We'll use a simple state to toggle between logged-in and logged-out views.
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // TRY CHANGING `false` to `true` to see the logged-in view!
+
   const navLinks = [
-    { name: 'Cement & Concrete', href: '/products/cement' },
-    { name: 'Steel & Rebar', href: '/products/steel' },
-    { name: 'Bricks & Masonry', href: '/products/masonry' },
-    { name: 'Lumber & Wood', href: '/products/wood' },
+    { name: 'Cement', href: '/products?category=cement' },
+    { name: 'Steel', href: '/products?category=steel' },
+    { name: 'Lumber', href: '/products?category=lumber' },
+    { name: 'Paints', href: '/products?category=paints' },
   ];
 
   return (
-    <nav className="bg-gray-800 text-white shadow-lg sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="bg-gray-800 text-white shadow-md sticky top-0 z-50">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          {/* Logo Section */}
+          {/* Logo */}
           <div className="flex-shrink-0">
             <Link href="/" className="text-2xl font-extrabold text-yellow-400">
-              BuildMart
+              BUILDMART
             </Link>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <div className="hidden md:flex md:items-center md:space-x-4 lg:space-x-6">
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex lg:space-x-8">
             {navLinks.map(link => (
               <Link
                 key={link.name}
                 href={link.href}
-                className="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                className="text-gray-300 hover:text-yellow-400 transition-colors duration-200 font-medium"
               >
                 {link.name}
               </Link>
             ))}
-          </div>
+          </nav>
 
-          {/* Search and Icons Section */}
+          {/* Search and Actions */}
           <div className="flex items-center space-x-4">
-            {/* Search Bar */}
-            <div className="hidden sm:block">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Icon
-                    path="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    className="w-5 h-5 text-gray-400"
-                  />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Search materials..."
-                  className="bg-gray-700 border border-gray-600 rounded-lg w-40 lg:w-64 pl-10 pr-4 py-2 text-sm focus:ring-yellow-500 focus:border-yellow-500 transition"
-                />
-              </div>
+            <div className="hidden md:block relative">
+              <input
+                type="text"
+                placeholder="Search materials..."
+                className="bg-gray-700 text-white rounded-full py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-yellow-500 w-64"
+              />
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                size={20}
+              />
             </div>
 
-            {/* Icons */}
-            <div className="flex items-center space-x-3">
-              <Link
-                href="/account"
-                className="p-2 rounded-full hover:bg-gray-700 transition-colors"
-              >
-                <Icon path="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </Link>
-              <Link
-                href="/cart"
-                className="p-2 rounded-full hover:bg-gray-700 transition-colors relative"
-              >
-                <Icon path="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                <span className="absolute top-0 right-0 h-5 w-5 rounded-full bg-yellow-500 text-gray-900 text-xs font-bold flex items-center justify-center transform -translate-y-1/2 translate-x-1/2">
-                  {state.itemCount}
+            <Link
+              href="/cart"
+              className="relative p-2 rounded-full hover:bg-gray-700 transition-colors"
+            >
+              <ShoppingCart size={24} />
+              {state.itemCount > 0 && (
+                <span className="absolute top-0 right-0 flex h-5 w-5 rounded-full bg-yellow-500 text-gray-900 text-xs items-center justify-center font-bold">
+                  {state.itemCount > 99 ? '99+' : state.itemCount}
                 </span>
-              </Link>
+              )}
+            </Link>
+
+            {/* --- Conditional rendering for user actions --- */}
+            <div className="hidden lg:flex items-center">
+              {isLoggedIn ? (
+                // --- Logged-In View ---
+                <div className="relative group">
+                  <Link
+                    href="/account"
+                    className="p-2 rounded-full hover:bg-gray-700 transition-colors flex items-center"
+                  >
+                    <UserCircle size={28} />
+                  </Link>
+                  <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 invisible group-hover:visible">
+                    <div className="py-1">
+                      <Link
+                        href="/account"
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-yellow-400"
+                      >
+                        <LayoutDashboard size={16} /> My Account
+                      </Link>
+                      <button
+                        onClick={() => setIsLoggedIn(false)}
+                        className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-gray-700 hover:text-red-300"
+                      >
+                        <LogOut size={16} /> Logout
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                // --- Logged-Out View ---
+                <div className="flex items-center space-x-2">
+                  <Link
+                    href="/login"
+                    className="px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-700 transition-colors"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="px-4 py-2 text-sm font-medium bg-yellow-500 text-gray-900 rounded-md hover:bg-yellow-400 transition-colors"
+                  >
+                    Register
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
-            <div className="md:hidden flex items-center">
+            <div className="lg:hidden">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                className="p-2 rounded-md hover:bg-gray-700"
               >
-                <span className="sr-only">Open main menu</span>
-                {isMobileMenuOpen ? (
-                  <Icon path="M6 18L18 6M6 6l12 12" className="block h-6 w-6" />
-                ) : (
-                  <Icon path="M4 6h16M4 12h16M4 18h16" className="block h-6 w-6" />
-                )}
+                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
             </div>
           </div>
@@ -111,37 +134,56 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden" id="mobile-menu">
+        <div className="lg:hidden bg-gray-800 border-t border-gray-700">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {navLinks.map(link => (
               <Link
                 key={link.name}
                 href={link.href}
-                className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-yellow-400 hover:bg-gray-700"
               >
                 {link.name}
               </Link>
             ))}
-            <div className="sm:hidden p-2">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Icon
-                    path="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    className="w-5 h-5 text-gray-400"
-                  />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Search materials..."
-                  className="bg-gray-700 border border-gray-600 rounded-lg w-full pl-10 pr-4 py-2 text-sm focus:ring-yellow-500 focus:border-yellow-500 transition"
-                />
+          </div>
+          <div className="pt-4 pb-3 border-t border-gray-700">
+            {isLoggedIn ? (
+              <div className="px-2 space-y-1">
+                <Link
+                  href="/account"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-yellow-400"
+                >
+                  My Account
+                </Link>
+                <button
+                  onClick={() => {
+                    setIsLoggedIn(false);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-gray-700 hover:text-red-300"
+                >
+                  Logout
+                </button>
               </div>
-            </div>
+            ) : (
+              <div className="px-2 space-y-2">
+                <Link
+                  href="/login"
+                  className="block w-full text-center px-4 py-2 text-base font-medium rounded-md hover:bg-gray-700 transition-colors"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/register"
+                  className="block w-full text-center px-4 py-2 text-base font-medium bg-yellow-500 text-gray-900 rounded-md hover:bg-yellow-400 transition-colors"
+                >
+                  Register
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}
-    </nav>
+    </header>
   );
-};
-
-export default Navbar;
+}
