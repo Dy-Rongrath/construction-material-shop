@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronDown, List, Grid, Search, Star, Eye } from 'lucide-react';
 import { useCart } from '@/lib/hooks';
+import ProductGridSkeleton from '@/components/ProductGridSkeleton';
 
 // --- TYPES ---
 interface Product {
@@ -471,6 +472,7 @@ const FilterSidebar = ({
 export default function ProductCatalogPage() {
   const [view, setView] = useState('grid'); // 'grid' or 'list'
   const [sort, setSort] = useState('popularity'); // 'popularity', 'price-asc', 'price-desc', 'name-asc'
+  const [isLoading, setIsLoading] = useState(true); // Simulate loading state
   const [filters, setFilters] = useState<Filters>({
     search: '',
     categories: new Set<string>(),
@@ -478,6 +480,15 @@ export default function ProductCatalogPage() {
     minPrice: null,
     maxPrice: null,
   });
+
+  // Simulate loading state
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500); // Show skeleton for 1.5 seconds
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const filteredAndSortedProducts = useMemo(() => {
     let products = allProducts;
@@ -586,7 +597,9 @@ export default function ProductCatalogPage() {
             </div>
 
             {/* Product Display */}
-            {filteredAndSortedProducts.length > 0 ? (
+            {isLoading ? (
+              <ProductGridSkeleton count={8} />
+            ) : filteredAndSortedProducts.length > 0 ? (
               <div
                 className={
                   view === 'grid'

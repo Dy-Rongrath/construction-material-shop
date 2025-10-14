@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Spinner from '@/components/Spinner';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
@@ -8,6 +9,8 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary';
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  loading?: boolean;
+  loadingText?: string;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -16,6 +19,8 @@ const Button: React.FC<ButtonProps> = ({
   variant = 'primary', // 'primary' or 'secondary'
   size = 'md', // 'sm', 'md', 'lg'
   className = '',
+  loading = false,
+  loadingText,
   ...props
 }) => {
   const baseStyles =
@@ -36,8 +41,20 @@ const Button: React.FC<ButtonProps> = ({
   const classes = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`;
 
   return (
-    <button className={classes} onClick={onClick} {...props}>
-      {children}
+    <button
+      className={classes}
+      onClick={loading ? undefined : onClick}
+      disabled={loading || props.disabled}
+      {...props}
+    >
+      {loading ? (
+        <>
+          <Spinner size={size === 'sm' ? 16 : size === 'lg' ? 20 : 18} className="mr-2" />
+          {loadingText || 'Loading...'}
+        </>
+      ) : (
+        children
+      )}
     </button>
   );
 };
