@@ -29,11 +29,13 @@ interface Product {
 
 // API response interface
 interface ProductsResponse {
-  data: Product[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+  products: Product[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
 }
 
 // Reusable Icon component for the "Why Choose Us" section
@@ -67,6 +69,8 @@ const FeatureIcon = ({
 // Category icons as inline SVG components
 const CategoryIcon = ({ category }: { category: string }) => {
   const getIconForCategory = (cat: string) => {
+    if (!cat) return null; // Handle undefined/null categories
+
     switch (cat.toLowerCase()) {
       case 'cement':
         return (
@@ -250,47 +254,53 @@ export default function HomePage() {
         const bestSellersResponse = await fetch('/api/products?sort=rating&limit=4');
         if (bestSellersResponse.ok) {
           const bestSellersData: ProductsResponse = await bestSellersResponse.json();
-          const formattedBestSellers = bestSellersData.data.map(product => ({
-            id: product.id,
-            name: product.name,
-            price: `₹${product.price.toLocaleString()}`,
-            image: product.imageUrl,
-            category: product.category.name,
-            slug: product.slug,
-          }));
-          setBestSellers(formattedBestSellers);
+          if (bestSellersData.products) {
+            const formattedBestSellers = bestSellersData.products.map(product => ({
+              id: product.id,
+              name: product.name,
+              price: `$${product.price.toLocaleString()}`,
+              image: product.imageUrl,
+              category: product.category.name,
+              slug: product.slug,
+            }));
+            setBestSellers(formattedBestSellers);
+          }
         }
 
         // Fetch new arrivals (sort by newest first - assuming higher ID = newer)
         const newArrivalsResponse = await fetch('/api/products?sort=id&order=desc&limit=4');
         if (newArrivalsResponse.ok) {
           const newArrivalsData: ProductsResponse = await newArrivalsResponse.json();
-          const formattedNewArrivals = newArrivalsData.data.map(product => ({
-            id: product.id,
-            name: product.name,
-            price: `₹${product.price.toLocaleString()}`,
-            image: product.imageUrl,
-            category: product.category.name,
-            slug: product.slug,
-          }));
-          setNewArrivals(formattedNewArrivals);
+          if (newArrivalsData.products) {
+            const formattedNewArrivals = newArrivalsData.products.map(product => ({
+              id: product.id,
+              name: product.name,
+              price: `$${product.price.toLocaleString()}`,
+              image: product.imageUrl,
+              category: product.category.name,
+              slug: product.slug,
+            }));
+            setNewArrivals(formattedNewArrivals);
+          }
         }
 
         // Fetch categories
         const categoriesResponse = await fetch('/api/products?limit=1000');
         if (categoriesResponse.ok) {
           const categoriesData: ProductsResponse = await categoriesResponse.json();
-          const uniqueCategories = Array.from(
-            new Set(categoriesData.data.map(p => p.category.slug))
-          )
-            .map(slug => categoriesData.data.find(p => p.category.slug === slug)?.category)
-            .filter(Boolean) as Array<{ name: string; slug: string }>;
+          if (categoriesData.products) {
+            const uniqueCategories = Array.from(
+              new Set(categoriesData.products.map(p => p.category.slug))
+            )
+              .map(slug => categoriesData.products.find(p => p.category.slug === slug)?.category)
+              .filter(Boolean) as Array<{ name: string; slug: string }>;
 
-          const formattedCategories = uniqueCategories.slice(0, 4).map(category => ({
-            name: category.name,
-            href: `/products?category=${category.slug}`,
-          }));
-          setCategories(formattedCategories);
+            const formattedCategories = uniqueCategories.slice(0, 4).map(category => ({
+              name: category.name,
+              href: `/products?category=${category.slug}`,
+            }));
+            setCategories(formattedCategories);
+          }
         }
       } catch (error) {
         console.error('Error fetching home page data:', error);
@@ -334,8 +344,12 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center mb-10">Shop by Category</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-6">
-            {categories.map(category => (
-              <Link key={category.name} href={category.href} className="group relative block">
+            {categories.map((category, index) => (
+              <Link
+                key={`${category.name}-${index}`}
+                href={category.href}
+                className="group relative block"
+              >
                 <div className="aspect-square w-full overflow-hidden rounded-lg">
                   <CategoryIcon category={category.name} />
                 </div>
@@ -364,7 +378,7 @@ export default function HomePage() {
           <h2 className="text-3xl font-bold text-center mb-10">Best Sellers</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {bestSellers.map(product => (
-              <ProductCard key={product.name} {...product} />
+              <ProductCard key={product.id} {...product} />
             ))}
           </div>
           <div className="text-center mt-12">
@@ -384,7 +398,7 @@ export default function HomePage() {
           <h2 className="text-3xl font-bold text-center mb-10">New Arrivals</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {newArrivals.map(product => (
-              <ProductCard key={product.name} {...product} />
+              <ProductCard key={product.id} {...product} />
             ))}
           </div>
           <div className="text-center mt-12">

@@ -46,7 +46,7 @@ const ProductCard = ({ product }: { product: Product }) => (
     <div className="p-6 flex flex-col flex-grow">
       <h3 className="text-lg font-bold text-white mb-2 flex-grow">{product.name}</h3>
       <div className="flex items-center justify-between mt-auto">
-        <p className="text-xl font-black text-white">₹{product.price.toLocaleString()}</p>
+        <p className="text-xl font-black text-white">${product.price.toLocaleString()}</p>
         <div className="bg-yellow-500 text-gray-900 font-bold py-2 px-3 rounded-md group-hover:bg-yellow-400 text-sm transition-colors">
           View
         </div>
@@ -81,8 +81,8 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         if (!response.ok) throw new Error('Product not found');
 
         const data = await response.json();
-        if (data.data && data.data.length > 0) {
-          const foundProduct = data.data[0];
+        if (data.products && data.products.length > 0) {
+          const foundProduct = data.products[0];
           setProduct(foundProduct);
           setMainImage(foundProduct.imageUrl);
 
@@ -93,7 +93,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
           if (relatedResponse.ok) {
             const relatedData = await relatedResponse.json();
             // Filter out the current product
-            const related = relatedData.data.filter((p: Product) => p.id !== foundProduct.id);
+            const related = relatedData.products.filter((p: Product) => p.id !== foundProduct.id);
             setRelatedProducts(related);
           }
         }
@@ -196,7 +196,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 {product.rating} ({product.reviewCount} reviews)
               </span>
             </div>
-            <p className="text-4xl font-black text-white mb-6">₹{product.price.toLocaleString()}</p>
+            <p className="text-4xl font-black text-white mb-6">${product.price.toLocaleString()}</p>
 
             <div className="flex items-center gap-4 mb-8">
               <div className="flex items-center border border-gray-600 rounded-md">

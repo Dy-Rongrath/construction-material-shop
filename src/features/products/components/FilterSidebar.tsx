@@ -39,39 +39,43 @@ export const FilterSidebar = ({ filters, setFilters, categories, brands }: Filte
       {/* Category Filter */}
       <div className="mb-6">
         <h4 className="font-bold text-lg text-white mb-3">Category</h4>
-        {categories.map((cat: Category) => (
-          <div key={cat.id} className="flex items-center mb-2">
-            <input
-              type="checkbox"
-              id={`cat-${cat.slug}`}
-              checked={filters.categories.has(cat.slug)}
-              onChange={() => handleCheckboxChange('categories', cat.slug)}
-              className="w-4 h-4 text-yellow-500 bg-gray-700 border-gray-600 rounded focus:ring-yellow-600"
-            />
-            <label htmlFor={`cat-${cat.slug}`} className="ml-2 text-gray-300">
-              {cat.name}
-            </label>
-          </div>
-        ))}
+        {categories
+          .filter((cat): cat is Category => Boolean(cat && cat.slug && cat.name))
+          .map((cat: Category) => (
+            <div key={`category-${cat.slug}`} className="flex items-center mb-2">
+              <input
+                type="checkbox"
+                id={`cat-${cat.slug}`}
+                checked={filters.categories.has(cat.slug)}
+                onChange={() => handleCheckboxChange('categories', cat.slug)}
+                className="w-4 h-4 text-yellow-500 bg-gray-700 border-gray-600 rounded focus:ring-yellow-600"
+              />
+              <label htmlFor={`cat-${cat.slug}`} className="ml-2 text-gray-300">
+                {cat.name}
+              </label>
+            </div>
+          ))}
       </div>
 
       {/* Brand Filter */}
       <div className="mb-6">
         <h4 className="font-bold text-lg text-white mb-3">Brand</h4>
-        {brands.map((brand: string) => (
-          <div key={brand} className="flex items-center mb-2">
-            <input
-              type="checkbox"
-              id={`brand-${brand}`}
-              checked={filters.brands.has(brand)}
-              onChange={() => handleCheckboxChange('brands', brand)}
-              className="w-4 h-4 text-yellow-500 bg-gray-700 border-gray-600 rounded focus:ring-yellow-600"
-            />
-            <label htmlFor={`brand-${brand}`} className="ml-2 text-gray-300">
-              {brand}
-            </label>
-          </div>
-        ))}
+        {brands
+          .filter((brand): brand is string => Boolean(brand && brand.trim() !== ''))
+          .map((brand: string) => (
+            <div key={`brand-${brand}`} className="flex items-center mb-2">
+              <input
+                type="checkbox"
+                id={`brand-${brand}`}
+                checked={filters.brands.has(brand)}
+                onChange={() => handleCheckboxChange('brands', brand)}
+                className="w-4 h-4 text-yellow-500 bg-gray-700 border-gray-600 rounded focus:ring-yellow-600"
+              />
+              <label htmlFor={`brand-${brand}`} className="ml-2 text-gray-300">
+                {brand}
+              </label>
+            </div>
+          ))}
       </div>
 
       {/* Price Filter */}

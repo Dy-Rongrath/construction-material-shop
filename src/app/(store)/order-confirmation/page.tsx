@@ -131,7 +131,7 @@ function OrderConfirmationContent() {
             </div>
             <div className="flex justify-between items-center">
               <span className="font-semibold text-gray-400">Order Total</span>
-              <span className="font-bold text-2xl text-white">₹{order.total.toLocaleString()}</span>
+              <span className="font-bold text-2xl text-white">${order.total.toLocaleString()}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-semibold text-gray-400">Status</span>
@@ -158,7 +158,7 @@ function OrderConfirmationContent() {
                     {item.name} (x{item.quantity})
                   </span>
                   <span className="font-semibold">
-                    ₹{(item.price * item.quantity).toLocaleString()}
+                    ${(item.price * item.quantity).toLocaleString()}
                   </span>
                 </div>
               ))}

@@ -1,22 +1,36 @@
 /* eslint-disable react/no-unescaped-entities */
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
+
+interface SearchResult {
+  id: string;
+  slug: string;
+  name: string;
+  price: string;
+  image: string;
+  category: string;
+}
 
 // Reusable component for a product card (consistent with homepage)
 const ProductCard = ({
+  slug,
   name,
   price,
   image,
   category,
 }: {
+  slug: string;
   name: string;
   price: string;
   image: string;
   category: string;
 }) => (
   <div className="bg-gray-800 rounded-lg overflow-hidden group">
-    <Link href="/products/sample-product" className="block">
+    <Link href={`/products/${slug}`} className="block">
       <Image
         src={image}
         alt={name}
@@ -34,32 +48,47 @@ const ProductCard = ({
   </div>
 );
 
-// This is a server component, so we can directly access searchParams
-// Added a default value for searchParams to prevent crashes
-export default function SearchPage({ searchParams = {} }: { searchParams?: { q?: string } }) {
-  const query = searchParams.q || '';
+// This is now a client component
+export default function SearchPage() {
+  const searchParams = useSearchParams();
+  const query = searchParams.get('q') || '';
 
-  // Mock search results. In a real application, you would fetch this data
-  const searchResults = [
-    {
-      name: 'Grade A Portland Cement',
-      price: '$8.99 / bag',
-      image: 'https://placehold.co/400x300/1F2937/FBBF24?text=Cement',
-      category: 'Cement',
-    },
-    {
-      name: 'Waterproof Concrete Mix',
-      price: '$15.99 / bag',
-      image: 'https://placehold.co/400x300/1F2937/FBBF24?text=Concrete+Mix',
-      category: 'Concrete',
-    },
-    {
-      name: 'Quick-Set Concrete Patcher',
-      price: '$12.49 / tub',
-      image: 'https://placehold.co/400x300/1F2937/FBBF24?text=Concrete+Patcher',
-      category: 'Concrete',
-    },
-  ];
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchSearchResults = async () => {
+      if (!query) {
+        setSearchResults([]);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        setError(null);
+        const response = await fetch(`/api/products?search=${encodeURIComponent(query)}&limit=20`);
+        if (!response.ok) throw new Error('Failed to search products');
+        const data = await response.json();
+        const formattedResults: SearchResult[] = data.products.map((product: any) => ({
+          id: product.id,
+          slug: product.slug,
+          name: product.name,
+          price: `$${product.price.toLocaleString()}`,
+          image: product.imageUrl,
+          category: product.category,
+        }));
+        setSearchResults(formattedResults);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Search failed');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSearchResults();
+  }, [query]);
 
   const hasResults = searchResults.length > 0;
 
@@ -129,13 +158,23 @@ export default function SearchPage({ searchParams = {} }: { searchParams?: { q?:
 
           {/* Search Results Grid */}
           <main className="w-full lg:w-3/4">
-            {hasResults ? (
+            {isLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto"></div>
+                <p className="text-gray-400 mt-4">Searching...</p>
+              </div>
+            ) : error ? (
+              <div className="bg-red-800 p-10 rounded-lg text-center">
+                <h2 className="text-2xl font-bold text-white">Search Error</h2>
+                <p className="text-gray-400 mt-2">{error}</p>
+              </div>
+            ) : hasResults ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {searchResults.map(product => (
-                  <ProductCard key={product.name} {...product} />
+                  <ProductCard key={product.id} {...product} />
                 ))}
               </div>
-            ) : (
+            ) : query ? (
               <div className="bg-gray-800 p-10 rounded-lg text-center">
                 <h2 className="text-2xl font-bold text-white">No Results Found</h2>
                 <p className="text-gray-400 mt-2">
@@ -143,40 +182,7 @@ export default function SearchPage({ searchParams = {} }: { searchParams?: { q?:
                   check your spelling.
                 </p>
               </div>
-            )}
-
-            {/* Pagination (if there are results) */}
-            {hasResults && (
-              <div className="mt-12 flex justify-center items-center space-x-2">
-                <Link
-                  href="#"
-                  className="px-4 py-2 rounded-md bg-gray-700 hover:bg-yellow-500 hover:text-gray-900 transition-colors"
-                >
-                  Previous
-                </Link>
-                <Link href="#" className="px-4 py-2 rounded-md bg-yellow-500 text-gray-900">
-                  1
-                </Link>
-                <Link
-                  href="#"
-                  className="px-4 py-2 rounded-md bg-gray-700 hover:bg-yellow-500 hover:text-gray-900 transition-colors"
-                >
-                  2
-                </Link>
-                <Link
-                  href="#"
-                  className="px-4 py-2 rounded-md bg-gray-700 hover:bg-yellow-500 hover:text-gray-900 transition-colors"
-                >
-                  3
-                </Link>
-                <Link
-                  href="#"
-                  className="px-4 py-2 rounded-md bg-gray-700 hover:bg-yellow-500 hover:text-gray-900 transition-colors"
-                >
-                  Next
-                </Link>
-              </div>
-            )}
+            ) : null}
           </main>
         </div>
       </div>

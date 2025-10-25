@@ -176,7 +176,7 @@ export default function CheckoutPage() {
   }
 
   const subtotal = cartState.total;
-  const shipping = subtotal > 500 ? 0 : 50; // Free shipping over ₹500
+  const shipping = subtotal > 500 ? 0 : 50; // Free shipping over $500
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
   return (
@@ -321,7 +321,7 @@ export default function CheckoutPage() {
                       <span className="text-sm text-gray-400">Qty: {item.quantity}</span>
                     </div>
                   </div>
-                  <span>₹{(item.price * item.quantity).toLocaleString()}</span>
+                  <span>${(item.price * item.quantity).toLocaleString()}</span>
                 </div>
               ))}
             </div>
@@ -330,19 +330,19 @@ export default function CheckoutPage() {
             <div className="border-t border-gray-700 pt-6 space-y-4">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span>₹{subtotal.toLocaleString()}</span>
+                <span>${subtotal.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span>Shipping</span>
-                <span>{shipping === 0 ? 'Free' : `₹${shipping.toLocaleString()}`}</span>
+                <span>{shipping === 0 ? 'Free' : `$${shipping.toLocaleString()}`}</span>
               </div>
               <div className="flex justify-between">
                 <span>Tax (8%)</span>
-                <span>₹{tax.toFixed(2)}</span>
+                <span>${tax.toFixed(2)}</span>
               </div>
               <div className="flex justify-between font-bold text-xl border-t border-gray-600 pt-4">
                 <span>Total</span>
-                <span>₹{total.toFixed(2)}</span>
+                <span>${total.toFixed(2)}</span>
               </div>
             </div>
           </div>

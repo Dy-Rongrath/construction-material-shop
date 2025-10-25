@@ -65,7 +65,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userId, items, totalAmount } = body;
+    const { userId, items, total, totalAmount } = body;
+    const amount = total || totalAmount;
 
     if (!userId || !items || items.length === 0) {
       return NextResponse.json({ error: 'Invalid order data' }, { status: 400 });
@@ -105,7 +106,7 @@ export async function POST(request: NextRequest) {
       const newOrder = await tx.order.create({
         data: {
           userId,
-          totalAmount,
+          totalAmount: amount,
           status: 'PENDING',
         },
       });

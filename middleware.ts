@@ -10,12 +10,9 @@ const authRoutes = ['/login', '/register'];
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Get the token from cookies or headers
-  const token =
-    request.cookies.get('next-auth.session-token')?.value ||
-    request.cookies.get('__Secure-next-auth.session-token')?.value;
-
-  const isAuthenticated = !!token;
+  // Get the user from cookies
+  const userCookie = request.cookies.get('construction_material_shop_user')?.value;
+  const isAuthenticated = !!userCookie;
 
   // Redirect authenticated users away from auth pages
   if (isAuthenticated && authRoutes.some(route => pathname.startsWith(route))) {

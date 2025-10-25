@@ -258,7 +258,7 @@ export default function AccountPage() {
                           {new Date(order.createdAt).toLocaleDateString()}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
-                          ₹{order.total.toLocaleString()}
+                          ${order.total.toLocaleString()}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm">
                           <span

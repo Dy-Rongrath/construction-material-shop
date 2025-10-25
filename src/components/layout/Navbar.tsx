@@ -3,13 +3,16 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Search, ShoppingCart, Menu, X, UserCircle, LayoutDashboard, LogOut } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useCart } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth';
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { state } = useCart();
   const { user, login, logout } = useAuth();
+  const router = useRouter();
 
   const navLinks = [
     { name: 'Cement', href: '/products?category=cement' },
@@ -17,6 +20,14 @@ export default function Navbar() {
     { name: 'Lumber', href: '/products?category=lumber' },
     { name: 'Paints', href: '/products?category=paints' },
   ];
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
+    }
+  };
 
   return (
     <header className="bg-gray-800 text-white shadow-md sticky top-0 z-50">
@@ -44,17 +55,21 @@ export default function Navbar() {
 
           {/* Search and Actions */}
           <div className="flex items-center space-x-4">
-            <div className="hidden md:block relative">
+            <form onSubmit={handleSearch} className="hidden md:block relative">
               <input
                 type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search materials..."
                 className="bg-gray-700 text-white rounded-full py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-yellow-500 w-64"
               />
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                size={20}
-              />
-            </div>
+              <button type="submit">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
+              </button>
+            </form>
 
             <Link
               href="/cart"

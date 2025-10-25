@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 
 interface ProductWhereClause {
   category?: { slug: string };
+  slug?: string;
   OR?: Array<{
     name?: { contains: string; mode: string };
     description?: { contains: string; mode: string };
@@ -34,9 +35,16 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     const skip = (page - 1) * limit;
+    const sort = searchParams.get('sort') || 'createdAt';
+    const order = searchParams.get('order') || 'desc';
+    const slug = searchParams.get('slug');
 
     // Build where clause
     const where: ProductWhereClause = {};
+
+    if (slug) {
+      where.slug = slug;
+    }
 
     if (category && category !== 'all') {
       where.category = {
@@ -52,6 +60,18 @@ export async function GET(request: NextRequest) {
       ];
     }
 
+    // Build orderBy
+    const orderBy: Record<string, 'asc' | 'desc'> = {};
+    if (sort === 'rating') {
+      orderBy.rating = order === 'asc' ? 'asc' : 'desc';
+    } else if (sort === 'price') {
+      orderBy.price = order === 'asc' ? 'asc' : 'desc';
+    } else if (sort === 'name') {
+      orderBy.name = order === 'asc' ? 'asc' : 'desc';
+    } else {
+      orderBy.createdAt = order === 'asc' ? 'asc' : 'desc';
+    }
+
     // Get products with category
     const products = await prisma.product.findMany({
       where,
@@ -60,9 +80,7 @@ export async function GET(request: NextRequest) {
       },
       skip,
       take: limit,
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy,
     });
 
     // Get total count for pagination

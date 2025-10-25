@@ -8,9 +8,10 @@ import { Product } from '@/types';
 interface ProductCardProps {
   product: Product;
   view: string;
+  priority?: boolean;
 }
 
-export const ProductCard = ({ product, view }: ProductCardProps) => {
+export const ProductCard = ({ product, view, priority = false }: ProductCardProps) => {
   const { dispatch } = useCart();
 
   const handleAddToCart = () => {
@@ -45,6 +46,7 @@ export const ProductCard = ({ product, view }: ProductCardProps) => {
             alt={product.name}
             fill
             className="object-cover"
+            priority={priority}
             unoptimized
           />
         </div>
@@ -69,7 +71,7 @@ export const ProductCard = ({ product, view }: ProductCardProps) => {
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xl font-black text-white">₹{product.price.toLocaleString()}</p>
+              <p className="text-2xl font-black text-white">${product.price.toLocaleString()}</p>
               <p className={`text-sm ${product.inStock ? 'text-green-400' : 'text-red-400'}`}>
                 {product.inStock ? 'In Stock' : 'Out of Stock'}
               </p>
@@ -129,7 +131,7 @@ export const ProductCard = ({ product, view }: ProductCardProps) => {
           <span className="text-gray-400 text-xs">({product.reviewCount})</span>
         </div>
         <div className="flex items-center justify-between mt-auto">
-          <p className="text-2xl font-black text-white">₹{product.price.toLocaleString()}</p>
+          <p className="text-2xl font-black text-white">${product.price.toLocaleString()}</p>
           <div className="flex gap-2">
             <Link
               href={`/products/${product.slug}`}

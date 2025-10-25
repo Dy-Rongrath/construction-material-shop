@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, useMemo } from 'react';
 import { ChevronDown, List, Grid, Search } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { ProductCard, FilterSidebar } from '@/features/products/components';
@@ -37,7 +37,15 @@ function ProductCatalogContent() {
 
   // Fetch products from API
   const fetchProducts = useCallback(
-    async (page = 1, searchFilters: Filters = filters) => {
+    async (page = 1, searchFilters?: Filters) => {
+      const filtersToUse = searchFilters || {
+        search: '',
+        categories: new Set<string>(),
+        brands: new Set<string>(),
+        minPrice: null,
+        maxPrice: null,
+      };
+
       try {
         setIsLoading(true);
         const params = new URLSearchParams({
@@ -45,18 +53,18 @@ function ProductCatalogContent() {
           limit: itemsPerPage.toString(),
         });
 
-        if (searchFilters.search) params.append('search', searchFilters.search);
-        if (searchFilters.categories.size > 0) {
-          Array.from(searchFilters.categories).forEach(cat => params.append('category', cat));
+        if (filtersToUse.search) params.append('search', filtersToUse.search);
+        if (filtersToUse.categories.size > 0) {
+          Array.from(filtersToUse.categories).forEach(cat => params.append('category', cat));
         }
-        if (searchFilters.brands.size > 0) {
-          Array.from(searchFilters.brands).forEach(brand => params.append('brand', brand));
+        if (filtersToUse.brands.size > 0) {
+          Array.from(filtersToUse.brands).forEach(brand => params.append('brand', brand));
         }
-        if (searchFilters.minPrice != null) {
-          params.append('minPrice', searchFilters.minPrice.toString());
+        if (filtersToUse.minPrice != null) {
+          params.append('minPrice', filtersToUse.minPrice.toString());
         }
-        if (searchFilters.maxPrice != null) {
-          params.append('maxPrice', searchFilters.maxPrice.toString());
+        if (filtersToUse.maxPrice != null) {
+          params.append('maxPrice', filtersToUse.maxPrice.toString());
         }
 
         const response = await fetch(`/api/products?${params.toString()}`);
@@ -71,7 +79,7 @@ function ProductCatalogContent() {
         setIsLoading(false);
       }
     },
-    [filters, itemsPerPage]
+    [itemsPerPage]
   );
 
   // Fetch categories and brands
@@ -105,24 +113,28 @@ function ProductCatalogContent() {
   // Initial data fetch
   useEffect(() => {
     fetchCategoriesAndBrands();
-    fetchProducts(1, filters);
-  }, [fetchCategoriesAndBrands, fetchProducts, filters]);
+    fetchProducts(1);
+  }, [fetchCategoriesAndBrands, fetchProducts]);
 
   // Update filters when search params change
   useEffect(() => {
     const categoryParam = searchParams.get('category');
-    const newFilters = {
-      ...filters,
-      categories: categoryParam ? new Set([categoryParam]) : new Set<string>(),
-    };
-    setFilters(newFilters);
-    fetchProducts(1, newFilters);
-  }, [searchParams, fetchProducts, filters]);
+    if (categoryParam) {
+      setFilters(prev => ({
+        ...prev,
+        categories: new Set([categoryParam]),
+      }));
+    }
+  }, [searchParams]);
 
-  // Refetch when filters change
+  // Refetch when filters or page change
   useEffect(() => {
-    fetchProducts(currentPage, filters);
-  }, [filters, currentPage, fetchProducts]);
+    fetchProducts(currentPage);
+  }, [currentPage, fetchProducts]);
+
+  // Memoize categories and brands to ensure stable references
+  const memoizedCategories = useMemo(() => categories, [categories]);
+  const memoizedBrands = useMemo(() => brands, [brands]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -156,8 +168,8 @@ function ProductCatalogContent() {
           <FilterSidebar
             filters={filters}
             setFilters={setFilters}
-            categories={categories}
-            brands={brands}
+            categories={memoizedCategories}
+            brands={memoizedBrands}
           />
 
           {/* Main Content */}
