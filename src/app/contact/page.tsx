@@ -76,7 +76,7 @@ export default function ContactPage() {
                 title="Email"
                 iconPath="M21.75 9v.906a2.25 2.25 0 01-1.183 1.981l-6.478 3.488a2.25 2.25 0 01-2.18 0l-6.478-3.488A2.25 2.25 0 012.25 9.906V9"
               >
-                sales@buildmart.com
+                sales@constructionmaterialshop.com
               </ContactDetail>
             </dl>
           </div>

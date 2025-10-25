@@ -23,9 +23,9 @@ const CartItem = ({
   onUpdateQuantity,
   onRemove,
 }: {
-  item: { id: number; name: string; price: number; quantity: number; imageUrl: string };
-  onUpdateQuantity: (id: number, quantity: number) => void;
-  onRemove: (id: number) => void;
+  item: { id: string; name: string; price: number; quantity: number; imageUrl: string };
+  onUpdateQuantity: (id: string, quantity: number) => void;
+  onRemove: (id: string) => void;
 }) => {
   const handleDecrease = () => {
     onUpdateQuantity(item.id, item.quantity - 1);
@@ -82,11 +82,11 @@ const CartItem = ({
 export default function CartPage() {
   const { state, dispatch } = useCart();
 
-  const handleUpdateQuantity = (id: number, quantity: number) => {
+  const handleUpdateQuantity = (id: string, quantity: number) => {
     dispatch({ type: 'UPDATE_QUANTITY', payload: { id, quantity } });
   };
 
-  const handleRemoveItem = (id: number) => {
+  const handleRemoveItem = (id: string) => {
     dispatch({ type: 'REMOVE_ITEM', payload: { id } });
   };
 

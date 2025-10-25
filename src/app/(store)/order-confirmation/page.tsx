@@ -1,5 +1,8 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 // Reusable Icon component
 const Icon = ({ path, className = 'w-6 h-6' }: { path: string; className?: string }) => (
@@ -14,20 +17,96 @@ const Icon = ({ path, className = 'w-6 h-6' }: { path: string; className?: strin
   </svg>
 );
 
-export default function OrderConfirmationPage() {
-  // In a real app, you would fetch the order details using an ID from the URL.
-  const mockOrder = {
-    id: 'BM-12345-2024',
-    date: 'October 13, 2025',
-    total: '$1062.30',
-    shippingAddress: '123 Construction Ave, Buildsville, CA, 12345',
-    paymentMethod: 'Visa ending in •••• 1234',
-    items: [
-      { name: 'Reinforced Steel Rebar (10ft)', quantity: 10, price: '$255.00' },
-      { name: 'UltraGrade Portland Cement', quantity: 20, price: '$319.80' },
-      { name: 'Construction Grade Lumber (2x4x8)', quantity: 50, price: '$437.50' },
-    ],
+interface OrderItem {
+  id: string;
+  name: string;
+  quantity: number;
+  price: number;
+}
+
+interface Order {
+  id: string;
+  createdAt: string;
+  total: number;
+  status: string;
+  shippingAddress: {
+    firstName: string;
+    lastName: string;
+    address: string;
+    city: string;
+    state: string;
+    zipCode: string;
   };
+  items: OrderItem[];
+}
+
+export default function OrderConfirmationPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <OrderConfirmationContent />
+    </Suspense>
+  );
+}
+
+function OrderConfirmationContent() {
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get('orderId');
+
+  const [order, setOrder] = useState<Order | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchOrder = async () => {
+      if (!orderId) {
+        setError('No order ID provided');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/orders/${orderId}`);
+        if (!response.ok) {
+          throw new Error('Order not found');
+        }
+        const orderData = await response.json();
+        setOrder(orderData);
+      } catch (error) {
+        setError(error instanceof Error ? error.message : 'Failed to load order');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOrder();
+  }, [orderId]);
+
+  if (isLoading) {
+    return (
+      <div className="bg-gray-900 text-white min-h-screen py-16 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
+          <p>Loading order details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !order) {
+    return (
+      <div className="bg-gray-900 text-white min-h-screen py-16 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-400 mb-4">{error || 'Order not found'}</div>
+          <Link
+            href="/products"
+            className="bg-yellow-500 text-gray-900 font-bold py-2 px-4 rounded-lg hover:bg-yellow-400 transition-colors"
+          >
+            Continue Shopping
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-900 text-white min-h-screen py-16">
@@ -44,35 +123,58 @@ export default function OrderConfirmationPage() {
           <div className="bg-gray-700 p-6 rounded-lg text-left my-8 space-y-4">
             <div className="flex justify-between items-center">
               <span className="font-semibold text-gray-400">Order ID</span>
-              <span className="font-mono text-yellow-400">{mockOrder.id}</span>
+              <span className="font-mono text-yellow-400">#{order.id.slice(-8)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-semibold text-gray-400">Order Date</span>
-              <span className="text-white">{mockOrder.date}</span>
+              <span className="text-white">{new Date(order.createdAt).toLocaleDateString()}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-semibold text-gray-400">Order Total</span>
-              <span className="font-bold text-2xl text-white">{mockOrder.total}</span>
+              <span className="font-bold text-2xl text-white">₹{order.total.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="font-semibold text-gray-400">Status</span>
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                  order.status === 'Delivered'
+                    ? 'bg-green-500/20 text-green-400'
+                    : order.status === 'Shipped'
+                      ? 'bg-blue-500/20 text-blue-400'
+                      : 'bg-yellow-500/20 text-yellow-400'
+                }`}
+              >
+                {order.status}
+              </span>
             </div>
           </div>
 
           <div className="text-left border-t border-gray-700 pt-8">
             <h2 className="text-2xl font-bold mb-4">Order Summary</h2>
             <div className="space-y-4 mb-6">
-              {mockOrder.items.map(item => (
-                <div key={item.name} className="flex justify-between">
+              {order.items.map(item => (
+                <div key={item.id} className="flex justify-between">
                   <span className="text-gray-300">
                     {item.name} (x{item.quantity})
                   </span>
-                  <span className="font-semibold">{item.price}</span>
+                  <span className="font-semibold">
+                    ₹{(item.price * item.quantity).toLocaleString()}
+                  </span>
                 </div>
               ))}
             </div>
             <div className="space-y-4 border-t border-gray-700 pt-6">
               <h3 className="text-xl font-bold">Shipping To</h3>
-              <p className="text-gray-400">{mockOrder.shippingAddress}</p>
+              <p className="text-gray-400">
+                {order.shippingAddress.firstName} {order.shippingAddress.lastName}
+                <br />
+                {order.shippingAddress.address}
+                <br />
+                {order.shippingAddress.city}, {order.shippingAddress.state}{' '}
+                {order.shippingAddress.zipCode}
+              </p>
               <h3 className="text-xl font-bold">Payment</h3>
-              <p className="text-gray-400">{mockOrder.paymentMethod}</p>
+              <p className="text-gray-400">Payment processed securely</p>
             </div>
           </div>
 

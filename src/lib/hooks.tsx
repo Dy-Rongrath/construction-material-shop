@@ -2,10 +2,11 @@
 
 // Custom React hooks
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { useAuth } from './auth';
 
 // Cart types
 export interface CartItem {
-  id: number;
+  id: string;
   name: string;
   price: number;
   imageUrl: string;
@@ -13,64 +14,55 @@ export interface CartItem {
 }
 
 export interface CartState {
+  id?: string;
   items: CartItem[];
   total: number;
   itemCount: number;
+  isLoading: boolean;
+  error: string | null;
 }
 
 // Cart actions
 type CartAction =
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_ERROR'; payload: string | null }
+  | { type: 'SET_CART'; payload: CartState }
   | { type: 'ADD_ITEM'; payload: Omit<CartItem, 'quantity'> }
-  | { type: 'REMOVE_ITEM'; payload: { id: number } }
-  | { type: 'UPDATE_QUANTITY'; payload: { id: number; quantity: number } }
+  | { type: 'REMOVE_ITEM'; payload: { id: string } }
+  | { type: 'UPDATE_QUANTITY'; payload: { id: string; quantity: number } }
   | { type: 'CLEAR_CART' };
 
 // Cart reducer
 const cartReducer = (state: CartState, action: CartAction): CartState => {
   switch (action.type) {
+    case 'SET_LOADING':
+      return { ...state, isLoading: action.payload };
+
+    case 'SET_ERROR':
+      return { ...state, error: action.payload, isLoading: false };
+
+    case 'SET_CART':
+      return { ...action.payload, isLoading: false, error: null };
+
     case 'ADD_ITEM': {
-      const existingItem = state.items.find(item => item.id === action.payload.id);
-      let newItems;
-
-      if (existingItem) {
-        newItems = state.items.map(item =>
-          item.id === action.payload.id ? { ...item, quantity: item.quantity + 1 } : item
-        );
-      } else {
-        newItems = [...state.items, { ...action.payload, quantity: 1 }];
-      }
-
-      const total = newItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      const itemCount = newItems.reduce((sum, item) => sum + item.quantity, 0);
-
-      return { items: newItems, total, itemCount };
+      // This will be handled by API call, just set loading state
+      return { ...state, isLoading: true, error: null };
     }
 
     case 'REMOVE_ITEM': {
-      const newItems = state.items.filter(item => item.id !== action.payload.id);
-      const total = newItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      const itemCount = newItems.reduce((sum, item) => sum + item.quantity, 0);
-
-      return { items: newItems, total, itemCount };
+      // This will be handled by API call, just set loading state
+      return { ...state, isLoading: true, error: null };
     }
 
     case 'UPDATE_QUANTITY': {
-      if (action.payload.quantity <= 0) {
-        return cartReducer(state, { type: 'REMOVE_ITEM', payload: { id: action.payload.id } });
-      }
-
-      const newItems = state.items.map(item =>
-        item.id === action.payload.id ? { ...item, quantity: action.payload.quantity } : item
-      );
-
-      const total = newItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      const itemCount = newItems.reduce((sum, item) => sum + item.quantity, 0);
-
-      return { items: newItems, total, itemCount };
+      // This will be handled by API call, just set loading state
+      return { ...state, isLoading: true, error: null };
     }
 
-    case 'CLEAR_CART':
-      return { items: [], total: 0, itemCount: 0 };
+    case 'CLEAR_CART': {
+      // This will be handled by API call, just set loading state
+      return { ...state, isLoading: true, error: null };
+    }
 
     default:
       return state;
@@ -94,48 +86,130 @@ export const useCart = () => {
 
 // Cart provider component
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const [state, dispatch] = useReducer(cartReducer, {
     items: [],
     total: 0,
     itemCount: 0,
+    isLoading: false,
+    error: null,
   });
 
-  // Load cart from localStorage on mount
-  useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      try {
-        const parsedCart = JSON.parse(savedCart);
-        // Restore cart state by dispatching ADD_ITEM for each item with its saved quantity
-        parsedCart.items.forEach((item: CartItem) => {
-          // First add the item without quantity
-          dispatch({
-            type: 'ADD_ITEM',
-            payload: {
-              id: item.id,
-              name: item.name,
-              price: item.price,
-              imageUrl: item.imageUrl,
-            },
-          });
-          // Then update to the correct quantity if more than 1
-          if (item.quantity > 1) {
-            dispatch({
-              type: 'UPDATE_QUANTITY',
-              payload: { id: item.id, quantity: item.quantity },
-            });
-          }
-        });
-      } catch (error) {
-        console.error('Failed to load cart from localStorage:', error);
-      }
+  // API functions
+  const fetchCart = async (userId: string) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      const response = await fetch(`/api/cart?userId=${userId}`);
+      if (!response.ok) throw new Error('Failed to fetch cart');
+      const cartData = await response.json();
+      dispatch({ type: 'SET_CART', payload: cartData });
+    } catch (error) {
+      dispatch({
+        type: 'SET_ERROR',
+        payload: error instanceof Error ? error.message : 'Failed to fetch cart',
+      });
     }
-  }, []);
+  };
 
-  // Save cart to localStorage whenever it changes
+  const addToCart = async (userId: string, productId: string, quantity: number = 1) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      const response = await fetch('/api/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, productId, quantity }),
+      });
+      if (!response.ok) throw new Error('Failed to add item to cart');
+      const cartData = await response.json();
+      dispatch({ type: 'SET_CART', payload: cartData });
+    } catch (error) {
+      dispatch({
+        type: 'SET_ERROR',
+        payload: error instanceof Error ? error.message : 'Failed to add item to cart',
+      });
+    }
+  };
+
+  const updateCartItem = async (userId: string, productId: string, quantity: number) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      const response = await fetch('/api/cart', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, productId, quantity }),
+      });
+      if (!response.ok) throw new Error('Failed to update cart item');
+      const cartData = await response.json();
+      dispatch({ type: 'SET_CART', payload: cartData });
+    } catch (error) {
+      dispatch({
+        type: 'SET_ERROR',
+        payload: error instanceof Error ? error.message : 'Failed to update cart item',
+      });
+    }
+  };
+
+  const removeFromCart = async (userId: string, productId?: string) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      const url = productId
+        ? `/api/cart?userId=${userId}&productId=${productId}`
+        : `/api/cart?userId=${userId}`;
+      const response = await fetch(url, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to remove item from cart');
+      const cartData = await response.json();
+      dispatch({ type: 'SET_CART', payload: cartData });
+    } catch (error) {
+      dispatch({
+        type: 'SET_ERROR',
+        payload: error instanceof Error ? error.message : 'Failed to remove item from cart',
+      });
+    }
+  };
+
+  // Load cart when user logs in
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(state));
-  }, [state]);
+    if (user) {
+      fetchCart(user.id.toString());
+    } else {
+      // Clear cart when user logs out
+      dispatch({
+        type: 'SET_CART',
+        payload: { items: [], total: 0, itemCount: 0, isLoading: false, error: null },
+      });
+    }
+  }, [user]);
 
-  return <CartContext.Provider value={{ state, dispatch }}>{children}</CartContext.Provider>;
+  // Enhanced dispatch function that handles API calls
+  const enhancedDispatch = (action: CartAction) => {
+    if (!user) {
+      dispatch({ type: 'SET_ERROR', payload: 'Please log in to manage your cart' });
+      return;
+    }
+
+    const userId = user.id.toString();
+
+    switch (action.type) {
+      case 'ADD_ITEM':
+        addToCart(userId, action.payload.id.toString());
+        break;
+      case 'REMOVE_ITEM':
+        removeFromCart(userId, action.payload.id);
+        break;
+      case 'UPDATE_QUANTITY':
+        updateCartItem(userId, action.payload.id, action.payload.quantity);
+        break;
+      case 'CLEAR_CART':
+        removeFromCart(userId);
+        break;
+      default:
+        dispatch(action);
+    }
+  };
+
+  return (
+    <CartContext.Provider value={{ state, dispatch: enhancedDispatch }}>
+      {children}
+    </CartContext.Provider>
+  );
 };

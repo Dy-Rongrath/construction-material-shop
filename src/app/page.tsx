@@ -1,11 +1,40 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { PromotionalBanner } from '@/components/ui';
-import { getBestSellers, getNewArrivals, getCategories } from '@/lib/products';
 import { useCart } from '@/lib/hooks';
+
+// Database product interface
+interface Product {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  price: number;
+  brand: string;
+  imageUrl: string;
+  images: string[];
+  specs: Record<string, unknown>;
+  inStock: boolean;
+  rating: number;
+  reviewCount: number;
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+}
+
+// API response interface
+interface ProductsResponse {
+  data: Product[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
 
 // Reusable Icon component for the "Why Choose Us" section
 const FeatureIcon = ({
@@ -123,7 +152,7 @@ const ProductCard = ({
   category,
   slug,
 }: {
-  id: number;
+  id: string;
   name: string;
   price: string;
   image: string;
@@ -180,30 +209,98 @@ const ProductCard = ({
 };
 
 export default function HomePage() {
-  const bestSellers = getBestSellers(4).map(product => ({
-    id: product.id,
-    name: product.name,
-    price: `₹${product.price.toLocaleString()}`,
-    image: product.imageUrl,
-    category: product.category,
-    slug: product.slug,
-  }));
+  const [bestSellers, setBestSellers] = useState<
+    Array<{
+      id: string;
+      name: string;
+      price: string;
+      image: string;
+      category: string;
+      slug: string;
+    }>
+  >([]);
 
-  const newArrivals = getNewArrivals(4).map(product => ({
-    id: product.id,
-    name: product.name,
-    price: `₹${product.price.toLocaleString()}`,
-    image: product.imageUrl,
-    category: product.category,
-    slug: product.slug,
-  }));
+  const [newArrivals, setNewArrivals] = useState<
+    Array<{
+      id: string;
+      name: string;
+      price: string;
+      image: string;
+      category: string;
+      slug: string;
+    }>
+  >([]);
 
-  const categories = getCategories()
-    .slice(0, 4)
-    .map(category => ({
-      name: category,
-      href: `/products?category=${category.toLowerCase()}`,
-    }));
+  const [categories, setCategories] = useState<
+    Array<{
+      name: string;
+      href: string;
+    }>
+  >([]);
+
+  const [, setIsLoading] = useState(true);
+
+  // Fetch data from API
+  useEffect(() => {
+    const fetchHomePageData = async () => {
+      try {
+        setIsLoading(true);
+
+        // Fetch best sellers (sort by rating)
+        const bestSellersResponse = await fetch('/api/products?sort=rating&limit=4');
+        if (bestSellersResponse.ok) {
+          const bestSellersData: ProductsResponse = await bestSellersResponse.json();
+          const formattedBestSellers = bestSellersData.data.map(product => ({
+            id: product.id,
+            name: product.name,
+            price: `₹${product.price.toLocaleString()}`,
+            image: product.imageUrl,
+            category: product.category.name,
+            slug: product.slug,
+          }));
+          setBestSellers(formattedBestSellers);
+        }
+
+        // Fetch new arrivals (sort by newest first - assuming higher ID = newer)
+        const newArrivalsResponse = await fetch('/api/products?sort=id&order=desc&limit=4');
+        if (newArrivalsResponse.ok) {
+          const newArrivalsData: ProductsResponse = await newArrivalsResponse.json();
+          const formattedNewArrivals = newArrivalsData.data.map(product => ({
+            id: product.id,
+            name: product.name,
+            price: `₹${product.price.toLocaleString()}`,
+            image: product.imageUrl,
+            category: product.category.name,
+            slug: product.slug,
+          }));
+          setNewArrivals(formattedNewArrivals);
+        }
+
+        // Fetch categories
+        const categoriesResponse = await fetch('/api/products?limit=1000');
+        if (categoriesResponse.ok) {
+          const categoriesData: ProductsResponse = await categoriesResponse.json();
+          const uniqueCategories = Array.from(
+            new Set(categoriesData.data.map(p => p.category.slug))
+          )
+            .map(slug => categoriesData.data.find(p => p.category.slug === slug)?.category)
+            .filter(Boolean) as Array<{ name: string; slug: string }>;
+
+          const formattedCategories = uniqueCategories.slice(0, 4).map(category => ({
+            name: category.name,
+            href: `/products?category=${category.slug}`,
+          }));
+          setCategories(formattedCategories);
+        }
+      } catch (error) {
+        console.error('Error fetching home page data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchHomePageData();
+  }, []);
 
   return (
     <>
@@ -304,7 +401,7 @@ export default function HomePage() {
       {/* Why Choose Us Section */}
       <section className="py-16 sm:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-12">Why BuildMart?</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">Why Construction Material Shop?</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             <FeatureIcon title="Unmatched Quality" path="M5 13l4 4L19 7">
               We source only the highest-grade materials, ensuring your projects are durable and

@@ -5,7 +5,28 @@ import { Plus, Minus, Star, ShieldCheck, Truck } from 'lucide-react';
 import Image from 'next/image';
 import FullPageLoader from '@/components/FullPageLoader';
 import { Breadcrumbs } from '@/components';
-import { Product, allProducts, getProductBySlug } from '@/lib/products';
+import { useCart } from '@/lib/hooks';
+
+// Database product interface
+interface Product {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  price: number;
+  brand: string;
+  imageUrl: string;
+  images: string[];
+  specs: Record<string, unknown>;
+  inStock: boolean;
+  rating: number;
+  reviewCount: number;
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+}
 
 // A small card component for the "Related Products" section
 const ProductCard = ({ product }: { product: Product }) => (
@@ -42,6 +63,7 @@ interface ProductDetailPageProps {
 
 export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const resolvedParams = use(params);
+  const { dispatch } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
@@ -49,18 +71,38 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    const slug = resolvedParams?.slug;
-    if (slug) {
-      const foundProduct = getProductBySlug(slug);
-      if (foundProduct) {
-        setProduct(foundProduct);
-        setMainImage(foundProduct.imageUrl);
-        const related = allProducts
-          .filter(p => p.category === foundProduct.category && p.id !== foundProduct.id)
-          .slice(0, 4);
-        setRelatedProducts(related);
+    const fetchProduct = async () => {
+      const slug = resolvedParams?.slug;
+      if (!slug) return;
+
+      try {
+        // Fetch product by slug
+        const response = await fetch(`/api/products?slug=${slug}`);
+        if (!response.ok) throw new Error('Product not found');
+
+        const data = await response.json();
+        if (data.data && data.data.length > 0) {
+          const foundProduct = data.data[0];
+          setProduct(foundProduct);
+          setMainImage(foundProduct.imageUrl);
+
+          // Fetch related products from same category
+          const relatedResponse = await fetch(
+            `/api/products?category=${foundProduct.category.slug}&limit=4`
+          );
+          if (relatedResponse.ok) {
+            const relatedData = await relatedResponse.json();
+            // Filter out the current product
+            const related = relatedData.data.filter((p: Product) => p.id !== foundProduct.id);
+            setRelatedProducts(related);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching product:', error);
       }
-    }
+    };
+
+    fetchProduct();
   }, [resolvedParams?.slug]);
 
   if (!product) {
@@ -69,6 +111,20 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
   const handleQuantity = (amount: number) => {
     setQuantity(prev => Math.max(1, prev + amount));
+  };
+
+  const handleAddToCart = () => {
+    if (product) {
+      dispatch({
+        type: 'ADD_ITEM',
+        payload: {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          imageUrl: product.imageUrl,
+        },
+      });
+    }
   };
 
   return (
@@ -80,8 +136,8 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             { name: 'Home', href: '/' },
             { name: 'Products', href: '/products' },
             {
-              name: product.category,
-              href: `/products?category=${product.category.toLowerCase()}`,
+              name: product.category.name,
+              href: `/products?category=${product.category.slug}`,
             },
             { name: product.name, href: '#' },
           ]}
@@ -121,7 +177,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
           {/* Product Details & Actions */}
           <div>
-            <p className="text-yellow-400 font-semibold mb-2">{product.category}</p>
+            <p className="text-yellow-400 font-semibold mb-2">{product.category.name}</p>
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-4">
               {product.name}
             </h1>
@@ -137,7 +193,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 ))}
               </div>
               <span className="text-gray-400">
-                {product.rating} ({product.reviews} reviews)
+                {product.rating} ({product.reviewCount} reviews)
               </span>
             </div>
             <p className="text-4xl font-black text-white mb-6">₹{product.price.toLocaleString()}</p>
@@ -158,7 +214,10 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                   <Plus size={16} />
                 </button>
               </div>
-              <button className="flex-grow bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-md text-lg hover:bg-yellow-400 transition-colors shadow-lg">
+              <button
+                onClick={handleAddToCart}
+                className="flex-grow bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-md text-lg hover:bg-yellow-400 transition-colors shadow-lg"
+              >
                 Add to Cart
               </button>
             </div>
@@ -207,7 +266,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                           className="flex justify-between border-b border-gray-700 pb-2"
                         >
                           <span className="font-semibold text-gray-400">{key}:</span>
-                          <span className="text-white text-right">{value}</span>
+                          <span className="text-white text-right">{String(value)}</span>
                         </li>
                       ))}
                     </ul>

@@ -18,7 +18,7 @@ const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Column 1: Company Info */}
           <div className="space-y-4 col-span-2 md:col-span-1">
-            <h3 className="text-2xl font-extrabold text-yellow-400">BuildMart</h3>
+            <h3 className="text-2xl font-extrabold text-yellow-400">Construction Material Shop</h3>
             <p className="text-gray-400 text-sm">
               Your one-stop shop for high-quality construction materials. Built to last, delivered
               with care.
@@ -111,7 +111,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-gray-700 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 text-sm">
-            &copy; {new Date().getFullYear()} BuildMart. All Rights Reserved.
+            &copy; {new Date().getFullYear()} Construction Material Shop. All Rights Reserved.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <SocialIcon

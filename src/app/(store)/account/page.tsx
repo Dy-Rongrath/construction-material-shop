@@ -1,6 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@/lib/auth';
+import { useRouter } from 'next/navigation';
 
 // Type definitions
 interface IconProps {
@@ -12,6 +15,19 @@ interface InfoCardProps {
   title: string;
   iconPath: string;
   children: React.ReactNode;
+}
+
+interface Order {
+  id: string;
+  createdAt: string;
+  total: number;
+  status: string;
+  items: Array<{
+    id: string;
+    name: string;
+    quantity: number;
+    price: number;
+  }>;
 }
 
 // Reusable Icon component
@@ -27,20 +43,6 @@ const Icon: React.FC<IconProps> = ({ path, className = 'w-6 h-6' }) => (
     <path strokeLinecap="round" strokeLinejoin="round" d={path} />
   </svg>
 );
-
-// Mock data - replace with data from your backend
-const mockUser = {
-  name: 'Alex Doe',
-  email: 'alex.doe@example.com',
-  memberSince: '2023-01-15',
-};
-
-const mockOrders = [
-  { id: 'ORD-101', date: '2024-07-21', total: 145.5, status: 'Delivered', items: 3 },
-  { id: 'ORD-102', date: '2024-07-18', total: 89.99, status: 'Delivered', items: 1 },
-  { id: 'ORD-103', date: '2024-06-30', total: 320.0, status: 'Cancelled', items: 5 },
-  { id: 'ORD-104', date: '2024-08-01', total: 45.0, status: 'Shipped', items: 2 },
-];
 
 const mockAddresses = [
   {
@@ -74,18 +76,80 @@ const InfoCard: React.FC<InfoCardProps> = ({ title, iconPath, children }) => (
 
 // Main Account Page Component
 export default function AccountPage() {
-  const [user, setUser] = useState(mockUser);
+  const { user } = useAuth();
+  const router = useRouter();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!user) {
+      router.push('/auth/login?redirect=/account');
+    }
+  }, [user, router]);
+
+  // Fetch user data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!user) return;
+
+      try {
+        setIsLoading(true);
+
+        // Fetch user orders
+        const ordersResponse = await fetch(`/api/orders?userId=${user.id}`);
+        if (ordersResponse.ok) {
+          const ordersData = await ordersResponse.json();
+          setOrders(ordersData);
+        }
+
+        // For now, we'll use mock addresses since we don't have an addresses API yet
+        // In a real app, you'd fetch addresses from an API
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchUserData();
+    }
+  }, [user]);
 
   const handleProfileUpdate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const newName = formData.get('name') as string;
-    if (newName && newName !== user.name) {
-      setUser({ ...user, name: newName });
-    }
+    // Profile update functionality would go here
     setIsEditing(false);
   };
+
+  if (!user) {
+    return (
+      <div className="bg-gray-900 min-h-screen text-white flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Please log in to view your account</h1>
+          <Link
+            href="/auth/login?redirect=/account"
+            className="bg-yellow-500 text-gray-900 font-bold py-2 px-4 rounded-lg hover:bg-yellow-400 transition-colors"
+          >
+            Log In
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="bg-gray-900 min-h-screen text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
+          <p>Loading your account...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-900 min-h-screen text-white p-4 sm:p-6 lg:p-8">
@@ -109,7 +173,7 @@ export default function AccountPage() {
                     <input
                       type="text"
                       name="name"
-                      defaultValue={user.name}
+                      defaultValue={user.name || ''}
                       className="mt-1 w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 focus:ring-yellow-500 focus:border-yellow-500"
                     />
                   </div>
@@ -147,8 +211,7 @@ export default function AccountPage() {
                     <strong className="font-medium text-gray-300">Email:</strong> {user.email}
                   </p>
                   <p>
-                    <strong className="font-medium text-gray-300">Member Since:</strong>{' '}
-                    {user.memberSince}
+                    <strong className="font-medium text-gray-300">Member Since:</strong> Recently
                   </p>
                   <div className="text-right">
                     <button
@@ -186,16 +249,16 @@ export default function AccountPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-gray-800 divide-y divide-gray-700">
-                    {mockOrders.map(order => (
+                    {orders.map(order => (
                       <tr key={order.id}>
                         <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
-                          {order.id}
+                          #{order.id.slice(-6)}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
-                          {order.date}
+                          {new Date(order.createdAt).toLocaleDateString()}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
-                          ${order.total.toFixed(2)}
+                          ₹{order.total.toLocaleString()}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm">
                           <span

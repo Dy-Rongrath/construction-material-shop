@@ -2,6 +2,10 @@ import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import ClientLayout from '@/components/ClientLayout';
+import { Providers } from '@/components/providers';
+import { ErrorBoundary } from '@/components';
+import { StructuredData } from '@/components/SEO';
+import { generateOrganizationStructuredData } from '@/utils/seo';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -15,8 +19,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'BuildMart - Quality Construction Materials',
-    template: '%s | BuildMart',
+    default: 'Construction Material Shop - Quality Construction Materials',
+    template: '%s | Construction Material Shop',
   },
   description:
     'Your trusted source for high-quality construction materials. From cement and steel to lumber and masonry supplies, we deliver excellence to your job site.',
@@ -29,38 +33,38 @@ export const metadata: Metadata = {
     'masonry',
     'construction equipment',
   ],
-  authors: [{ name: 'BuildMart Team' }],
-  creator: 'BuildMart',
-  publisher: 'BuildMart',
+  authors: [{ name: 'Construction Material Shop Team' }],
+  creator: 'Construction Material Shop',
+  publisher: 'Construction Material Shop',
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://buildmart.com'),
+  metadataBase: new URL('https://constructionmaterialshop.com'),
   alternates: {
     canonical: '/',
   },
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://buildmart.com',
-    title: 'BuildMart - Quality Construction Materials',
+    url: 'https://constructionmaterialshop.com',
+    title: 'Construction Material Shop - Quality Construction Materials',
     description:
       'Your trusted source for high-quality construction materials. From cement and steel to lumber and masonry supplies.',
-    siteName: 'BuildMart',
+    siteName: 'Construction Material Shop',
     images: [
       {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'BuildMart - Construction Materials',
+        alt: 'Construction Material Shop - Construction Materials',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'BuildMart - Quality Construction Materials',
+    title: 'Construction Material Shop - Quality Construction Materials',
     description: 'Your trusted source for high-quality construction materials.',
     images: ['/twitter-image.jpg'],
   },
@@ -93,12 +97,19 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const organizationData = generateOrganizationStructuredData();
+
   return (
     <html lang="en" className="scroll-smooth" data-scroll-behavior="smooth">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-900 text-white min-h-screen flex flex-col`}
       >
-        <ClientLayout>{children}</ClientLayout>
+        <StructuredData data={organizationData} />
+        <ErrorBoundary>
+          <Providers>
+            <ClientLayout>{children}</ClientLayout>
+          </Providers>
+        </ErrorBoundary>
       </body>
     </html>
   );

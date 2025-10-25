@@ -84,7 +84,7 @@ export default function AboutPage() {
         <div className="mx-auto max-w-7xl px-6 lg:px-8 text-center">
           <div className="mx-auto max-w-2xl">
             <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl">
-              About BuildMart
+              About Construction Material Shop
             </h1>
             <p className="mt-6 text-lg leading-8 text-gray-300">
               We&apos;re not just a supplier; we&apos;re the foundation of your success. Learn about
@@ -103,11 +103,11 @@ export default function AboutPage() {
                 Our Story
               </h2>
               <p className="mt-6">
-                BuildMart was founded in 2010 with a simple but powerful vision: to streamline the
-                procurement process for builders, contractors, and DIY enthusiasts alike. Frustrated
-                by the delays and inconsistent quality from existing suppliers, our founder, John
-                Carter, set out to create a one-stop shop for reliable, high-quality construction
-                materials.
+                Construction Material Shop was founded in 2010 with a simple but powerful vision: to
+                streamline the procurement process for builders, contractors, and DIY enthusiasts
+                alike. Frustrated by the delays and inconsistent quality from existing suppliers,
+                our founder, John Carter, set out to create a one-stop shop for reliable,
+                high-quality construction materials.
               </p>
               <p className="mt-8">
                 From a small local warehouse, we&apos;ve grown into a leading regional distributor,

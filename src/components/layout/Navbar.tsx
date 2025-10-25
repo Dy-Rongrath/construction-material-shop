@@ -4,16 +4,12 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Search, ShoppingCart, Menu, X, UserCircle, LayoutDashboard, LogOut } from 'lucide-react';
 import { useCart } from '@/lib/hooks';
+import { useAuth } from '@/lib/auth';
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { state } = useCart();
-
-  // --- STATE SIMULATION ---
-  // In a real app, this would come from an authentication context (e.g., useAuth() hook)
-  // We'll use a simple state to toggle between logged-in and logged-out views.
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  // TRY CHANGING `false` to `true` to see the logged-in view!
+  const { user, login, logout } = useAuth();
 
   const navLinks = [
     { name: 'Cement', href: '/products?category=cement' },
@@ -29,7 +25,7 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link href="/" className="text-2xl font-extrabold text-yellow-400">
-              BUILDMART
+              CONSTRUCTION MATERIAL SHOP
             </Link>
           </div>
 
@@ -74,7 +70,7 @@ export default function Navbar() {
 
             {/* --- Conditional rendering for user actions --- */}
             <div className="hidden lg:flex items-center">
-              {isLoggedIn ? (
+              {user ? (
                 // --- Logged-In View ---
                 <div className="relative group">
                   <Link
@@ -92,7 +88,7 @@ export default function Navbar() {
                         <LayoutDashboard size={16} /> My Account
                       </Link>
                       <button
-                        onClick={() => setIsLoggedIn(false)}
+                        onClick={logout}
                         className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-gray-700 hover:text-red-300"
                       >
                         <LogOut size={16} /> Logout
@@ -103,18 +99,12 @@ export default function Navbar() {
               ) : (
                 // --- Logged-Out View ---
                 <div className="flex items-center space-x-2">
-                  <Link
-                    href="/login"
+                  <button
+                    onClick={login}
                     className="px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-700 transition-colors"
                   >
-                    Login
-                  </Link>
-                  <Link
-                    href="/register"
-                    className="px-4 py-2 text-sm font-medium bg-yellow-500 text-gray-900 rounded-md hover:bg-yellow-400 transition-colors"
-                  >
-                    Register
-                  </Link>
+                    Login with GitHub
+                  </button>
                 </div>
               )}
             </div>
@@ -147,7 +137,7 @@ export default function Navbar() {
             ))}
           </div>
           <div className="pt-4 pb-3 border-t border-gray-700">
-            {isLoggedIn ? (
+            {user ? (
               <div className="px-2 space-y-1">
                 <Link
                   href="/account"
@@ -157,7 +147,7 @@ export default function Navbar() {
                 </Link>
                 <button
                   onClick={() => {
-                    setIsLoggedIn(false);
+                    logout();
                     setIsMobileMenuOpen(false);
                   }}
                   className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-gray-700 hover:text-red-300"
@@ -167,18 +157,12 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="px-2 space-y-2">
-                <Link
-                  href="/login"
+                <button
+                  onClick={login}
                   className="block w-full text-center px-4 py-2 text-base font-medium rounded-md hover:bg-gray-700 transition-colors"
                 >
-                  Login
-                </Link>
-                <Link
-                  href="/register"
-                  className="block w-full text-center px-4 py-2 text-base font-medium bg-yellow-500 text-gray-900 rounded-md hover:bg-yellow-400 transition-colors"
-                >
-                  Register
-                </Link>
+                  Login with GitHub
+                </button>
               </div>
             )}
           </div>
