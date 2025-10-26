@@ -2,7 +2,9 @@
 
 import React from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useCart } from '@/lib/hooks';
+import { useAuth } from '@/lib/auth';
 
 // Reusable Icon component
 const Icon = ({ path, className = 'w-6 h-6' }: { path: string; className?: string }) => (
@@ -81,6 +83,8 @@ const CartItem = ({
 // Main Shopping Cart Page Component
 export default function CartPage() {
   const { state, dispatch } = useCart();
+  const { user } = useAuth();
+  const router = useRouter();
 
   const handleUpdateQuantity = (id: string, quantity: number) => {
     dispatch({ type: 'UPDATE_QUANTITY', payload: { id, quantity } });
@@ -88,6 +92,17 @@ export default function CartPage() {
 
   const handleRemoveItem = (id: string) => {
     dispatch({ type: 'REMOVE_ITEM', payload: { id } });
+  };
+
+  const handleProceedToCheckout = () => {
+    if (state.items.length === 0) return;
+
+    if (!user) {
+      router.push('/auth/login?redirect=/checkout');
+      return;
+    }
+
+    router.push('/checkout');
   };
 
   const subtotal = state.total;
@@ -166,9 +181,17 @@ export default function CartPage() {
                 <span>${total.toFixed(2)}</span>
               </div>
             </div>
-            <button className="mt-8 w-full bg-yellow-500 text-gray-900 font-bold py-3 rounded-lg hover:bg-yellow-400 transition-colors flex items-center justify-center gap-2">
+            <button
+              onClick={handleProceedToCheckout}
+              disabled={state.items.length === 0}
+              className={`mt-8 w-full font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2 ${
+                state.items.length === 0
+                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                  : 'bg-yellow-500 text-gray-900 hover:bg-yellow-400'
+              }`}
+            >
               <Icon path="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              Proceed to Checkout
+              {state.items.length === 0 ? 'Cart is Empty' : 'Proceed to Checkout'}
             </button>
           </div>
         </div>

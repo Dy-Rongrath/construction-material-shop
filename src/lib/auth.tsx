@@ -33,8 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const sessionData = await response.json();
           setUser(sessionData.user);
         }
-      } catch (error) {
-        console.error('Error checking session:', error);
+      } catch {
       } finally {
         setIsLoading(false);
       }
@@ -90,8 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
-    } catch (error) {
-      console.error('Error during logout:', error);
+    } catch {
     } finally {
       setUser(null);
     }

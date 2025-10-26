@@ -97,8 +97,8 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             setRelatedProducts(related);
           }
         }
-      } catch (error) {
-        console.error('Error fetching product:', error);
+      } catch {
+        // Silently handle errors for product fetching
       }
     };
 

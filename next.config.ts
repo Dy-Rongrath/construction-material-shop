@@ -51,7 +51,16 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   images: {
     // Configure allowed external image domains
-    domains: ['images.unsplash.com', 'placehold.co'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
+      },
+    ],
   },
   // Apply headers for all routes and static assets
   async headers() {

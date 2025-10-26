@@ -81,6 +81,37 @@ function OrderConfirmationContent() {
     fetchOrder();
   }, [orderId]);
 
+  const handleDownloadReceipt = async () => {
+    if (!orderId) return;
+
+    try {
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'download' }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download receipt');
+      }
+
+      // Create a blob from the PDF and download it
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `order-${orderId.slice(-8)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch {
+      alert('Failed to download receipt. Please try again.');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="bg-gray-900 text-white min-h-screen py-16 flex items-center justify-center">
@@ -178,7 +209,17 @@ function OrderConfirmationContent() {
             </div>
           </div>
 
-          <div className="mt-10">
+          <div className="mt-10 flex gap-4 justify-center">
+            <button
+              onClick={handleDownloadReceipt}
+              className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-500 transition-colors flex items-center gap-2"
+            >
+              <Icon
+                path="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                className="w-5 h-5"
+              />
+              Download Receipt
+            </button>
             <Link
               href="/products"
               className="bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-lg hover:bg-yellow-400 transition-colors"

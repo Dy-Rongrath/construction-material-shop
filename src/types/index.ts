@@ -74,7 +74,14 @@ export interface Order {
   createdAt: string;
   total: number;
   status: string;
-  shippingAddress: string;
+  shippingAddress: {
+    firstName: string;
+    lastName: string;
+    address: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
   items: OrderItem[];
 }
 
@@ -103,7 +110,14 @@ export interface RegisterForm {
 }
 
 export interface CheckoutForm {
-  shippingAddress: string;
+  shippingAddress: {
+    firstName: string;
+    lastName: string;
+    address: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
   paymentMethod: string;
 }
 

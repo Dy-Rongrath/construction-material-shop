@@ -96,6 +96,12 @@ export default function CheckoutPage() {
     setError(null);
 
     try {
+      // Calculate final total including shipping and tax
+      const subtotal = cartState.total;
+      const shipping = subtotal > 500 ? 0 : 50;
+      const tax = subtotal * 0.08;
+      const finalTotal = subtotal + shipping + tax;
+
       // Create order via API
       const orderData = {
         items: cartState.items.map(item => ({
@@ -115,7 +121,7 @@ export default function CheckoutPage() {
           cardNumber: formData.cardNumber.replace(/\s/g, '').slice(-4), // Store only last 4 digits
           expiry: formData.expiry,
         },
-        total: cartState.total,
+        total: finalTotal,
       };
 
       const response = await fetch('/api/orders', {

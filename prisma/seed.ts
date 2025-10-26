@@ -4,8 +4,6 @@ import { allProducts } from '../src/lib/products';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting database seeding...');
-
   // Create categories first
   const categories = [
     { name: 'Cement', slug: 'cement', description: 'High-quality cement products' },
@@ -15,7 +13,6 @@ async function main() {
     { name: 'Concrete', slug: 'concrete', description: 'Ready-mix concrete and aggregates' },
   ];
 
-  console.log('📁 Creating categories...');
   for (const category of categories) {
     await prisma.category.upsert({
       where: { slug: category.slug },
@@ -31,11 +28,9 @@ async function main() {
   );
 
   // Create products
-  console.log('📦 Creating products...');
   for (const product of allProducts) {
     const categoryId = categoryMap.get(product.category.toLowerCase());
     if (!categoryId) {
-      console.warn(`⚠️  Category not found for product: ${product.name} (${product.category})`);
       continue;
     }
 
@@ -70,8 +65,6 @@ async function main() {
       },
     });
   }
-
-  console.log('✅ Database seeding completed!');
 }
 
 main()

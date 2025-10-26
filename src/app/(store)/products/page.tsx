@@ -73,8 +73,7 @@ function ProductCatalogContent() {
         const data = await response.json();
         setProducts(data.products || []);
         setTotalProducts(data.pagination?.total || 0);
-      } catch (error) {
-        console.error('Error fetching products:', error);
+      } catch {
       } finally {
         setIsLoading(false);
       }
@@ -105,8 +104,8 @@ function ProductCatalogContent() {
 
       setCategories(uniqueCategories);
       setBrands(uniqueBrands);
-    } catch (error) {
-      console.error('Error fetching categories and brands:', error);
+    } catch {
+      // Silently handle errors for categories and brands
     }
   }, []);
 

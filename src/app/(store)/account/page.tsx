@@ -106,8 +106,7 @@ export default function AccountPage() {
 
         // For now, we'll use mock addresses since we don't have an addresses API yet
         // In a real app, you'd fetch addresses from an API
-      } catch (error) {
-        console.error('Error fetching user data:', error);
+      } catch {
       } finally {
         setIsLoading(false);
       }
@@ -122,6 +121,35 @@ export default function AccountPage() {
     e.preventDefault();
     // Profile update functionality would go here
     setIsEditing(false);
+  };
+
+  const handleDownloadReceipt = async (orderId: string) => {
+    try {
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'download' }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download receipt');
+      }
+
+      // Create a blob from the PDF and download it
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `order-${orderId.slice(-8)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch {
+      alert('Failed to download receipt. Please try again.');
+    }
   };
 
   if (!user) {
@@ -274,9 +302,24 @@ export default function AccountPage() {
                           </span>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                          <a href="#" className="text-yellow-400 hover:text-yellow-300">
-                            Details
-                          </a>
+                          <div className="flex gap-2 justify-end">
+                            <Link
+                              href={`/orders/${order.id}`}
+                              className="text-yellow-400 hover:text-yellow-300"
+                            >
+                              Details
+                            </Link>
+                            <button
+                              onClick={() => handleDownloadReceipt(order.id)}
+                              className="text-blue-400 hover:text-blue-300"
+                              title="Download Receipt"
+                            >
+                              <Icon
+                                path="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                className="w-4 h-4"
+                              />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

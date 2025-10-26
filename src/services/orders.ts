@@ -58,7 +58,14 @@ export class OrdersService {
       quantity: number;
       price: number;
     }>;
-    shippingAddress: string;
+    shippingAddress: {
+      firstName: string;
+      lastName: string;
+      address: string;
+      city: string;
+      state: string;
+      zipCode: string;
+    };
     paymentMethod: string;
   }): Promise<ApiResponse<Order>> {
     return apiService.post<Order>('/orders', orderData);
