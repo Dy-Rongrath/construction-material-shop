@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Search, ShoppingCart, Menu, X, UserCircle, LayoutDashboard, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/lib/hooks';
@@ -11,7 +12,7 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { state } = useCart();
-  const { user, login, logout } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
 
   const navLinks = [
@@ -35,8 +36,15 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link href="/" className="text-2xl font-extrabold text-yellow-400">
-              CONSTRUCTION MATERIAL SHOP
+            <Link href="/" className="flex items-center">
+              <Image
+                src="/images/logo/ShopLogo.png"
+                alt="Construction Material Shop"
+                width={180}
+                height={50}
+                className="h-12 w-auto"
+                priority
+              />
             </Link>
           </div>
 
@@ -114,12 +122,12 @@ export default function Navbar() {
               ) : (
                 // --- Logged-Out View ---
                 <div className="flex items-center space-x-2">
-                  <button
-                    onClick={login}
-                    className="px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-700 transition-colors"
+                  <Link
+                    href="/auth/login"
+                    className="px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-700 transition-colors cursor-pointer"
                   >
-                    Login with GitHub
-                  </button>
+                    Login
+                  </Link>
                 </div>
               )}
             </div>
@@ -172,12 +180,12 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="px-2 space-y-2">
-                <button
-                  onClick={login}
-                  className="block w-full text-center px-4 py-2 text-base font-medium rounded-md hover:bg-gray-700 transition-colors"
+                <Link
+                  href="/auth/login"
+                  className="block w-full text-center px-4 py-2 text-base font-medium rounded-md hover:bg-gray-700 transition-colors cursor-pointer"
                 >
-                  Login with GitHub
-                </button>
+                  Login
+                </Link>
               </div>
             )}
           </div>

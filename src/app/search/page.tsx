@@ -1,10 +1,26 @@
 /* eslint-disable react/no-unescaped-entities */
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
+
+type ProductWithCategory = {
+  id: string;
+  slug: string;
+  name: string;
+  category: { name: string };
+  price: number;
+  brand: string;
+  rating: number;
+  reviewCount: number;
+  imageUrl: string;
+  images: string[];
+  description: string | null;
+  specs: unknown;
+  inStock: boolean;
+};
 
 interface SearchResult {
   id: string;
@@ -49,7 +65,7 @@ const ProductCard = ({
 );
 
 // This is now a client component
-export default function SearchPage() {
+function SearchPageContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
 
@@ -71,14 +87,16 @@ export default function SearchPage() {
         const response = await fetch(`/api/products?search=${encodeURIComponent(query)}&limit=20`);
         if (!response.ok) throw new Error('Failed to search products');
         const data = await response.json();
-        const formattedResults: SearchResult[] = data.products.map((product: any) => ({
-          id: product.id,
-          slug: product.slug,
-          name: product.name,
-          price: `$${product.price.toLocaleString()}`,
-          image: product.imageUrl,
-          category: product.category,
-        }));
+        const formattedResults: SearchResult[] = data.products.map(
+          (product: ProductWithCategory) => ({
+            id: product.id,
+            slug: product.slug,
+            name: product.name,
+            price: `$${product.price.toLocaleString()}`,
+            image: product.imageUrl,
+            category: product.category,
+          })
+        );
         setSearchResults(formattedResults);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Search failed');
@@ -187,5 +205,27 @@ export default function SearchPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Loading component for Suspense fallback
+function SearchLoading() {
+  return (
+    <div className="bg-gray-900 min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center mb-10">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-white">Search Results</h1>
+          <p className="mt-2 text-lg text-gray-400">Loading...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<SearchLoading />}>
+      <SearchPageContent />
+    </Suspense>
   );
 }

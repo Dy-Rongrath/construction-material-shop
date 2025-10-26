@@ -67,11 +67,12 @@ model Product {
 }
 
 model Order {
-  id          String      @id @default(cuid())
-  status      OrderStatus @default(PENDING)
-  totalAmount Float
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id             String      @id @default(cuid())
+  status         OrderStatus @default(PENDING)
+  totalAmount    Float
+  shippingAddress Json?      // JSON object for shipping address
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
   // Relations
   userId String

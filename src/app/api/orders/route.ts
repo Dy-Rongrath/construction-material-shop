@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { OrderStatus } from '@prisma/client';
 
 interface OrderWhereClause {
   userId?: string;
-  status?: string;
+  status?: OrderStatus;
 }
 
 export async function GET(request: NextRequest) {
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
     // Build where clause
     const where: OrderWhereClause = {};
     if (userId) where.userId = userId;
-    if (status) where.status = status;
+    if (status) where.status = status as OrderStatus;
 
     // Get orders with items and products
     const orders = await prisma.order.findMany({
@@ -65,7 +66,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userId, items, total, totalAmount } = body;
+    const { userId, items, total, totalAmount, shippingAddress } = body;
     const amount = total || totalAmount;
 
     if (!userId || !items || items.length === 0) {
@@ -107,6 +108,7 @@ export async function POST(request: NextRequest) {
         data: {
           userId,
           totalAmount: amount,
+          shippingAddress: shippingAddress || null,
           status: 'PENDING',
         },
       });

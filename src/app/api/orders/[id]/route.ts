@@ -40,7 +40,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const transformedOrder = {
       id: order.id,
       createdAt: order.createdAt.toISOString(),
-      total: order.total,
+      total: order.totalAmount,
       status: order.status,
       shippingAddress: order.shippingAddress,
       items: order.items.map((item: OrderItemWithProduct) => ({
