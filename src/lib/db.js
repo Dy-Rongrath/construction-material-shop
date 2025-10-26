@@ -1,5 +1,9 @@
 // Database connection and utilities
+import { config } from 'dotenv';
 import { PrismaClient } from '@prisma/client';
+
+// Load environment variables
+config({ path: '.env' });
 
 const globalForPrisma = globalThis;
 

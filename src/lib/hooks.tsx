@@ -99,7 +99,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchCart = async () => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
-      const response = await fetch('/api/cart');
+      const response = await fetch('/api/cart', {
+        credentials: 'include',
+      });
       if (!response.ok) throw new Error('Failed to fetch cart');
       const cartData = await response.json();
       dispatch({ type: 'SET_CART', payload: cartData });
@@ -118,6 +120,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId, quantity }),
+        credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to add item to cart');
       const cartData = await response.json();
@@ -137,6 +140,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId, quantity }),
+        credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to update cart item');
       const cartData = await response.json();
@@ -153,7 +157,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       const url = productId ? `/api/cart?productId=${productId}` : '/api/cart';
-      const response = await fetch(url, { method: 'DELETE' });
+      const response = await fetch(url, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
       if (!response.ok) throw new Error('Failed to remove item from cart');
       const cartData = await response.json();
       dispatch({ type: 'SET_CART', payload: cartData });

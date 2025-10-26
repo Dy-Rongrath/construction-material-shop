@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useCart } from '@/lib/hooks';
+// import { useCart } from '@/lib/hooks';
 
 // Database product interface
 interface Product {
@@ -158,32 +158,30 @@ const CategoryIcon = ({ category }: { category: string }) => {
 
 // Reusable component for a product card
 const ProductCard = ({
-  id,
   name,
   price,
   image,
   category,
   slug,
 }: {
-  id: string;
   name: string;
   price: number;
   image: string;
   category: string;
   slug: string;
 }) => {
-  const { dispatch } = useCart();
+  // const { dispatch } = useCart();
 
   const handleAddToCart = () => {
-    dispatch({
-      type: 'ADD_ITEM',
-      payload: {
-        id,
-        name,
-        price, // Now numeric
-        imageUrl: image,
-      },
-    });
+    // dispatch({
+    //   type: 'ADD_ITEM',
+    //   payload: {
+    //     id,
+    //     name,
+    //     price, // Now numeric
+    //     imageUrl: image,
+    //   },
+    // });
   };
 
   return (
@@ -376,7 +374,6 @@ export default function HomePage() {
               {bestSellers.map(product => (
                 <ProductCard
                   key={product.id}
-                  id={product.id}
                   name={product.name}
                   price={product.price}
                   image={product.imageUrl}
@@ -408,7 +405,6 @@ export default function HomePage() {
               {newArrivals.map(product => (
                 <ProductCard
                   key={product.id}
-                  id={product.id}
                   name={product.name}
                   price={product.price}
                   image={product.imageUrl}

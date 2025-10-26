@@ -14,38 +14,32 @@ export function PerformanceMonitor() {
     // Dynamic import to avoid bundling in development
     import('web-vitals').then(({ onCLS, onFCP, onINP, onLCP, onTTFB }) => {
       // Core Web Vitals
-      onCLS(metric => {
-        console.log('CLS:', metric.value);
-        sendToAnalytics('CLS', metric);
+      onCLS(() => {
+        sendToAnalytics();
       });
 
-      onFCP(metric => {
-        console.log('FCP:', metric.value);
-        sendToAnalytics('FCP', metric);
+      onFCP(() => {
+        sendToAnalytics();
       });
 
-      onLCP(metric => {
-        console.log('LCP:', metric.value);
-        sendToAnalytics('LCP', metric);
+      onLCP(() => {
+        sendToAnalytics();
       });
 
-      onTTFB(metric => {
-        console.log('TTFB:', metric.value);
-        sendToAnalytics('TTFB', metric);
+      onTTFB(() => {
+        sendToAnalytics();
       });
 
-      onINP(metric => {
-        console.log('INP:', metric.value);
-        sendToAnalytics('INP', metric);
+      onINP(() => {
+        sendToAnalytics();
       });
     });
   }, []);
 
   // Send metrics to analytics service
-  const sendToAnalytics = (name: string, metric: { value: number }) => {
+  const sendToAnalytics = () => {
     // In development, just log to console
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[Performance] ${name}:`, metric.value);
     }
     // In production, you would send to analytics service like Google Analytics
   };

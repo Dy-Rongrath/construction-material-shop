@@ -3,7 +3,6 @@ import { prisma } from '@/lib/db';
 import { OrderStatus } from '@prisma/client';
 import { getSession } from '@/lib/session';
 
-
 interface OrderWhereClause {
   userId?: string;
   status?: OrderStatus;

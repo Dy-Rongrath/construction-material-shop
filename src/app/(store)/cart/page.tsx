@@ -94,6 +94,36 @@ export default function CartPage() {
   const tax = subtotal * 0.08;
   const total = subtotal + tax;
 
+  // Show loading state
+  if (state.isLoading) {
+    return (
+      <div className="bg-gray-900 text-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400 mx-auto mb-4"></div>
+          <p>Loading your cart...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (state.error) {
+    return (
+      <div className="bg-gray-900 text-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-400 text-xl mb-4">Error</div>
+          <p className="text-gray-300">{state.error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 bg-yellow-500 text-gray-900 px-4 py-2 rounded hover:bg-yellow-400"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-gray-900 text-white min-h-screen py-12">
       <div className="container mx-auto px-6">

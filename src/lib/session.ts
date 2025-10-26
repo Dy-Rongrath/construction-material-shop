@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SignJWT, jwtVerify, JWTPayload } from 'jose';
+import 'dotenv/config';
 
 const getRandomBytes = async (length: number): Promise<Uint8Array> => {
   const array = new Uint8Array(length);
@@ -112,7 +113,6 @@ export async function getSession(request: NextRequest): Promise<SessionData | nu
 
   // Check if session has valid user data with required fields
   if (!session || !session.user || !session.user.id) {
-    console.log('Session invalid or missing user data');
     return null;
   }
 

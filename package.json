@@ -2,7 +2,9 @@
   "name": "construction-material-shop",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
@@ -39,6 +41,7 @@
     "bcryptjs": "^3.0.2",
     "clsx": "^2.1.1",
     "critters": "^0.0.23",
+    "dotenv": "^17.2.3",
     "express-rate-limit": "^7.4.1",
     "helmet": "^8.0.0",
     "jose": "^6.1.0",

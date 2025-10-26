@@ -12,7 +12,7 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product, view, priority = false }: ProductCardProps) => {
-  const { dispatch } = useCart();
+  const { dispatch, state } = useCart();
 
   const handleAddToCart = () => {
     dispatch({
@@ -85,10 +85,10 @@ export const ProductCard = ({ product, view, priority = false }: ProductCardProp
               </Link>
               <button
                 onClick={handleAddToCart}
-                disabled={!product.inStock}
+                disabled={!product.inStock || state.isLoading}
                 className="bg-yellow-500 text-gray-900 font-bold py-2 px-4 rounded-md hover:bg-yellow-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Add to Cart
+                {state.isLoading ? 'Adding...' : 'Add to Cart'}
               </button>
             </div>
           </div>
@@ -141,10 +141,10 @@ export const ProductCard = ({ product, view, priority = false }: ProductCardProp
             </Link>
             <button
               onClick={handleAddToCart}
-              disabled={!product.inStock}
+              disabled={!product.inStock || state.isLoading}
               className="bg-yellow-500 text-gray-900 font-bold py-1 px-3 rounded-md hover:bg-yellow-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
-              Add
+              {state.isLoading ? '...' : 'Add'}
             </button>
           </div>
         </div>

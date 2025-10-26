@@ -46,7 +46,6 @@ export async function POST(request: NextRequest) {
         break;
 
       default:
-        console.log(`Unhandled event: ${event}`);
     }
 
     return NextResponse.json({ message: 'Webhook processed successfully' });
@@ -57,16 +56,9 @@ export async function POST(request: NextRequest) {
 }
 
 // Webhook event handlers - using 'any' for payload since GitHub webhook payloads have complex, varying structures
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
-async function handlePushEvent(payload: any) {
-  console.log('Push event received:', {
-    repository: payload.repository.full_name,
-    branch: payload.ref.replace('refs/heads/', ''),
-    commits: payload.commits.length,
-    pusher: payload.pusher.name,
-  });
-
+async function handlePushEvent(_payload: any) {
+  // Push event details: repository, branch, commits, pusher
   // Here you could:
   // - Trigger CI/CD pipelines
   // - Update documentation
@@ -74,58 +66,21 @@ async function handlePushEvent(payload: any) {
   // - Update product information based on code changes
 }
 
-async function handlePullRequestEvent(payload: any) {
-  console.log('Pull request event:', {
-    action: payload.action,
-    number: payload.pull_request.number,
-    title: payload.pull_request.title,
-    repository: payload.repository.full_name,
-  });
-
+async function handlePullRequestEvent(_payload: any) {
   // Handle PR events like opened, closed, merged
-  if (payload.action === 'opened') {
-    // Could trigger automated testing or notifications
-  } else if (payload.action === 'closed' && payload.pull_request.merged) {
-    // Handle merge events - could trigger deployments
-  }
+  // Could trigger automated testing or notifications
 }
 
-async function handleReleaseEvent(payload: any) {
-  console.log('Release event:', {
-    action: payload.action,
-    tag: payload.release.tag_name,
-    name: payload.release.name,
-    repository: payload.repository.full_name,
-  });
-
+async function handleReleaseEvent(_payload: any) {
   // Handle release events - could update version information
-  if (payload.action === 'published') {
-    // Could update product versions, trigger deployments, etc.
-  }
+  // Could update product versions, trigger deployments, etc.
 }
 
-async function handleIssueEvent(payload: any) {
-  console.log('Issue event:', {
-    action: payload.action,
-    number: payload.issue.number,
-    title: payload.issue.title,
-    repository: payload.repository.full_name,
-  });
-
+async function handleIssueEvent(_payload: any) {
   // Handle issue events - could integrate with customer support
-  if (payload.action === 'opened') {
-    // Could create support tickets or notifications
-  }
+  // Could create support tickets or notifications
 }
 
-async function handleDeploymentEvent(payload: any) {
-  console.log('Deployment event:', {
-    environment: payload.deployment.environment,
-    status: payload.deployment_status?.state,
-    repository: payload.repository.full_name,
-  });
-
+async function handleDeploymentEvent(_payload: any) {
   // Handle deployment events - could update deployment status
 }
-
-/* eslint-enable @typescript-eslint/no-explicit-any */

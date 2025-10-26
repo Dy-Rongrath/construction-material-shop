@@ -1,4 +1,3 @@
-export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getSession } from '@/lib/session';
@@ -106,6 +105,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public files with extensions
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.).*)',
   ],
 };

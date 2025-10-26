@@ -36,8 +36,7 @@ export class SafeError extends Error {
 
 // Error factory functions for common scenarios
 export const ErrorFactory = {
-  validation: (message: string, _details?: string[]) =>
-    new SafeError(message, ErrorType.VALIDATION, 400, true),
+  validation: (message: string) => new SafeError(message, ErrorType.VALIDATION, 400, true),
 
   authentication: (message: string = 'Authentication required') =>
     new SafeError(message, ErrorType.AUTHENTICATION, 401, true),

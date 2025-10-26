@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import type { Prisma } from '@prisma/client';
 
+export const runtime = 'nodejs';
+
 type ProductWithCategory = Prisma.ProductGetPayload<{
   include: { category: true };
 }>;
@@ -78,7 +80,7 @@ export async function GET(request: NextRequest) {
       price: product.price,
       brand: product.brand,
       rating: product.rating,
-      reviews: product.reviewCount,
+      reviewCount: product.reviewCount,
       imageUrl: product.imageUrl,
       images: product.images,
       description: product.description,
