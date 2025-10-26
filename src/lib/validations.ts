@@ -1,5 +1,65 @@
 import { z } from 'zod';
 
+// Enhanced password validation with security requirements
+const securePasswordSchema = z
+  .string()
+  .min(8, 'Password must be at least 8 characters')
+  .max(128, 'Password must be less than 128 characters')
+  .regex(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+    'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
+  );
+
+// Sanitization functions for security
+export const sanitizers = {
+  html: (input: string): string => {
+    return input
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;')
+      .replace(/\//g, '&#x2F;');
+  },
+
+  sql: (input: string): string => {
+    return input.replace(/['";\\]/g, '');
+  },
+
+  filename: (input: string): string => {
+    return input.replace(/[^a-zA-Z0-9._-]/g, '_');
+  },
+
+  general: (input: string): string => {
+    return input.trim().substring(0, 10000); // Reasonable length limit
+  },
+};
+
+// Input validation helper
+export function validateAndSanitize<T>(
+  schema: z.ZodSchema<T>,
+  data: unknown,
+  sanitizeFields: (keyof T)[] = []
+): { success: true; data: T } | { success: false; errors: string[] } {
+  try {
+    // Sanitize specified fields
+    const sanitizedData = data && typeof data === 'object' ? { ...data } : {};
+    sanitizeFields.forEach(field => {
+      if (typeof (sanitizedData as any)[field] === 'string') {
+        (sanitizedData as any)[field] = sanitizers.general((sanitizedData as any)[field]);
+      }
+    });
+
+    const validData = schema.parse(sanitizedData);
+    return { success: true, data: validData };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const errors = error.issues.map((err: any) => `${err.path.join('.')}: ${err.message}`);
+      return { success: false, errors };
+    }
+    return { success: false, errors: ['Validation failed'] };
+  }
+}
+
 // Auth schemas
 export const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -8,10 +68,15 @@ export const loginSchema = z.object({
 
 export const registerSchema = z
   .object({
-    email: z.string().email('Please enter a valid email address'),
-    password: z.string().min(8, 'Password must be at least 8 characters'),
+    email: z.string().email('Please enter a valid email address').toLowerCase().trim(),
+    password: securePasswordSchema,
     confirmPassword: z.string(),
-    name: z.string().min(2, 'Name must be at least 2 characters'),
+    name: z
+      .string()
+      .min(2, 'Name must be at least 2 characters')
+      .max(50)
+      .regex(/^[a-zA-Z\s'-]+$/, 'Name contains invalid characters')
+      .trim(),
     acceptTerms: z
       .boolean()
       .refine(val => val === true, 'You must accept the terms and conditions'),

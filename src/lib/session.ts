@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SignJWT, jwtVerify, JWTPayload } from 'jose';
 
+const getRandomBytes = async (length: number): Promise<Uint8Array> => {
+  const array = new Uint8Array(length);
+  crypto.getRandomValues(array);
+  return array;
+};
+
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production'
+);
+
+// CSRF secret for token generation
+const CSRF_SECRET = new TextEncoder().encode(
+  process.env.CSRF_SECRET || 'your-csrf-secret-key-change-in-production'
 );
 
 export interface SessionUser {
@@ -15,22 +26,36 @@ export interface SessionUser {
 
 export interface SessionData extends JWTPayload {
   user: SessionUser;
-  expiresAt: string; // Store as ISO string for JWT
+  expiresAt: string;
+  sessionId: string; // Unique session identifier
+  csrfToken: string; // CSRF token for the session
+}
+
+// Generate a secure random string
+async function generateSecureToken(length: number = 32): Promise<string> {
+  const bytes = await getRandomBytes(length);
+  // Convert Uint8Array to hex string
+  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
 // Create a new session
 export async function createSession(user: SessionUser): Promise<string> {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+  const sessionId = await generateSecureToken();
+  const csrfToken = await generateSecureToken(16);
 
   const sessionData: SessionData = {
     user,
     expiresAt: expiresAt.toISOString(),
+    sessionId,
+    csrfToken,
   };
 
   const token = await new SignJWT(sessionData)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(expiresAt)
+    .setJti(sessionId) // JWT ID for additional uniqueness
     .sign(JWT_SECRET);
 
   return token;
@@ -40,29 +65,26 @@ export async function createSession(user: SessionUser): Promise<string> {
 export async function verifySession(token: string): Promise<SessionData | null> {
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
-    console.log('JWT payload keys:', Object.keys(payload));
-    console.log('JWT payload user:', payload.user);
 
     // Extract our custom data from the payload
     const user = payload.user as SessionUser;
     const expiresAt = payload.expiresAt as string;
+    const sessionId = (payload.sessionId as string) || (payload.jti as string);
+    const csrfToken = payload.csrfToken as string;
 
-    console.log('Extracted user:', user);
-    console.log('Extracted expiresAt:', expiresAt);
-
-    if (!user || !expiresAt) {
-      console.log('Session missing user or expiresAt, returning null');
+    if (!user || !expiresAt || !sessionId || !csrfToken) {
       return null;
     }
 
     if (!user.id) {
-      console.log('Session user missing id, returning null');
       return null;
     }
 
     const sessionData: SessionData = {
       user,
       expiresAt,
+      sessionId,
+      csrfToken,
       ...payload, // Include any other JWT properties
     };
 
@@ -109,9 +131,10 @@ export async function createSessionResponse(
   response.cookies.set('construction_material_shop_session', sessionToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: 'strict', // Changed from 'lax' to 'strict' for better security
     maxAge: 60 * 60 * 24 * 7, // 7 days
     path: '/',
+    domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined,
   });
 
   return response;
@@ -122,9 +145,10 @@ export function clearSession(response: NextResponse): NextResponse {
   response.cookies.set('construction_material_shop_session', '', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: 'strict',
     maxAge: 0,
     path: '/',
+    domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined,
   });
 
   return response;
@@ -139,4 +163,42 @@ export async function requireAuth(request: NextRequest): Promise<SessionData> {
   }
 
   return session;
+}
+
+// CSRF token management
+export async function generateCSRFToken(session: SessionData): Promise<string> {
+  const csrfToken = await new SignJWT({ sessionId: session.sessionId })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('1h') // CSRF tokens expire in 1 hour
+    .sign(CSRF_SECRET);
+
+  return csrfToken;
+}
+
+export async function verifyCSRFToken(token: string, session: SessionData): Promise<boolean> {
+  try {
+    const { payload } = await jwtVerify(token, CSRF_SECRET);
+
+    // Check if the session ID matches
+    return payload.sessionId === session.sessionId;
+  } catch {
+    return false;
+  }
+}
+
+// Session rotation for security
+export async function rotateSession(
+  _request: NextRequest,
+  user: SessionUser
+): Promise<NextResponse> {
+  const response = NextResponse.next();
+
+  // Clear old session
+  clearSession(response);
+
+  // Create new session
+  await createSessionResponse(response, user);
+
+  return response;
 }

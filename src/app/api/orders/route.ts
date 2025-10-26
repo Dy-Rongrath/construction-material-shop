@@ -3,6 +3,9 @@ import { prisma } from '@/lib/db';
 import { OrderStatus } from '@prisma/client';
 import { getSession } from '@/lib/session';
 
+// Force Node.js runtime for crypto operations
+export const runtime = 'nodejs';
+
 interface OrderWhereClause {
   userId?: string;
   status?: OrderStatus;
@@ -107,8 +110,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create order with items in a transaction
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const order = await prisma.$transaction(async (tx: any) => {
+    const order = await prisma.$transaction(async tx => {
       // Create the order
       const newOrder = await tx.order.create({
         data: {

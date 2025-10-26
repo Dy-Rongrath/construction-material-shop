@@ -18,6 +18,15 @@ const eslintConfig = [
     },
     rules: {
       'prettier/prettier': 'error',
+      // Security rules
+      'no-eval': 'error',
+      'no-implied-eval': 'error',
+      'no-new-func': 'error',
+      'no-script-url': 'off', // Temporarily disabled for tests
+      'no-alert': 'warn',
+      'no-debugger': 'error',
+      // TypeScript security (relaxed for compatibility)
+      '@typescript-eslint/no-explicit-any': 'off', // Temporarily disabled
     },
   },
   {

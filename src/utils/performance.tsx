@@ -36,6 +36,7 @@ export const performanceUtils = {
 
       const observer = new IntersectionObserver(
         ([entry]) => {
+          if (!entry) return;
           setIsIntersecting(entry.isIntersecting);
         },
         {
@@ -104,6 +105,7 @@ export function OptimizedImage({
 
     const observer = new IntersectionObserver(
       ([entry]) => {
+        if (!entry) return;
         if (entry.isIntersecting) {
           img.src = src;
           observer.disconnect();

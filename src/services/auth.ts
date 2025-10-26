@@ -53,8 +53,16 @@ export class AuthService {
       );
 
       if (userCookie) {
-        const userData = userCookie.split('=')[1];
-        return JSON.parse(decodeURIComponent(userData));
+        const parts = userCookie.split('=');
+        const userData = parts.length > 1 ? parts.slice(1).join('=') : '';
+        if (userData) {
+          try {
+            return JSON.parse(decodeURIComponent(userData));
+          } catch (err) {
+            console.error('Error parsing user cookie payload:', err);
+            return null;
+          }
+        }
       }
     } catch (error) {
       console.error('Error parsing user cookie:', error);
