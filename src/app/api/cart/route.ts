@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSession } from '@/lib/session';
 
-// Force Node.js runtime for crypto operations
-export const runtime = 'nodejs';
-
 // Type definitions for cart items with product data
 interface CartItemWithProduct {
   id: string;

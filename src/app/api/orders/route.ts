@@ -3,8 +3,6 @@ import { prisma } from '@/lib/db';
 import { OrderStatus } from '@prisma/client';
 import { getSession } from '@/lib/session';
 
-// Force Node.js runtime for crypto operations
-export const runtime = 'nodejs';
 
 interface OrderWhereClause {
   userId?: string;

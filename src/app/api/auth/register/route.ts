@@ -3,9 +3,6 @@ import { prisma } from '@/lib/db';
 import { createSessionResponse } from '@/lib/session';
 import bcrypt from 'bcryptjs';
 
-// Force Node.js runtime for crypto operations
-export const runtime = 'nodejs';
-
 export async function POST(request: NextRequest) {
   try {
     const { name, email, password } = await request.json();
