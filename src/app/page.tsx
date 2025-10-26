@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { PromotionalBanner } from '@/components/ui';
 import { useCart } from '@/lib/hooks';
 
 // Database product interface
@@ -27,6 +26,15 @@ interface Product {
   };
 }
 
+// Category interface for API response
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  imageUrl: string | null;
+}
+
 // API response interface
 interface ProductsResponse {
   products: Product[];
@@ -36,6 +44,11 @@ interface ProductsResponse {
     total: number;
     pages: number;
   };
+}
+
+// Categories API response interface
+interface CategoriesResponse {
+  categories: Category[];
 }
 
 // Reusable Icon component for the "Why Choose Us" section
@@ -158,7 +171,7 @@ const ProductCard = ({
 }: {
   id: string;
   name: string;
-  price: string;
+  price: number;
   image: string;
   category: string;
   slug: string;
@@ -171,7 +184,7 @@ const ProductCard = ({
       payload: {
         id,
         name,
-        price: parseInt(price.replace(/[^\d]/g, '')), // Extract numeric price
+        price, // Now numeric
         imageUrl: image,
       },
     });
@@ -192,7 +205,7 @@ const ProductCard = ({
       <div className="p-4">
         <p className="text-xs text-yellow-400 uppercase font-semibold">{category}</p>
         <h4 className="text-lg font-semibold text-white truncate mt-1">{name}</h4>
-        <p className="text-white mt-2 font-bold text-xl">{price}</p>
+        <p className="text-white mt-2 font-bold text-xl">${price.toLocaleString()}</p>
         <div className="flex gap-2 mt-3">
           <Link
             href={`/products/${slug}`}
@@ -213,58 +226,33 @@ const ProductCard = ({
 };
 
 export default function HomePage() {
-  const [bestSellers, setBestSellers] = useState<
-    Array<{
-      id: string;
-      name: string;
-      price: string;
-      image: string;
-      category: string;
-      slug: string;
-    }>
-  >([]);
-
-  const [newArrivals, setNewArrivals] = useState<
-    Array<{
-      id: string;
-      name: string;
-      price: string;
-      image: string;
-      category: string;
-      slug: string;
-    }>
-  >([]);
-
+  const [bestSellers, setBestSellers] = useState<Product[]>([]);
+  const [newArrivals, setNewArrivals] = useState<Product[]>([]);
   const [categories, setCategories] = useState<
     Array<{
       name: string;
       href: string;
     }>
   >([]);
-
-  const [, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch data from API
   useEffect(() => {
     const fetchHomePageData = async () => {
       try {
         setIsLoading(true);
+        setError(null);
 
         // Fetch best sellers (sort by rating)
         const bestSellersResponse = await fetch('/api/products?sort=rating&limit=4');
         if (bestSellersResponse.ok) {
           const bestSellersData: ProductsResponse = await bestSellersResponse.json();
           if (bestSellersData.products) {
-            const formattedBestSellers = bestSellersData.products.map(product => ({
-              id: product.id,
-              name: product.name,
-              price: `$${product.price.toLocaleString()}`,
-              image: product.imageUrl,
-              category: product.category.name,
-              slug: product.slug,
-            }));
-            setBestSellers(formattedBestSellers);
+            setBestSellers(bestSellersData.products);
           }
+        } else {
+          throw new Error('Failed to fetch best sellers');
         }
 
         // Fetch new arrivals (sort by newest first - assuming higher ID = newer)
@@ -272,38 +260,31 @@ export default function HomePage() {
         if (newArrivalsResponse.ok) {
           const newArrivalsData: ProductsResponse = await newArrivalsResponse.json();
           if (newArrivalsData.products) {
-            const formattedNewArrivals = newArrivalsData.products.map(product => ({
-              id: product.id,
-              name: product.name,
-              price: `$${product.price.toLocaleString()}`,
-              image: product.imageUrl,
-              category: product.category.name,
-              slug: product.slug,
-            }));
-            setNewArrivals(formattedNewArrivals);
+            setNewArrivals(newArrivalsData.products);
           }
+        } else {
+          throw new Error('Failed to fetch new arrivals');
         }
 
-        // Fetch categories
-        const categoriesResponse = await fetch('/api/products?limit=1000');
+        // Fetch categories using dedicated endpoint
+        const categoriesResponse = await fetch('/api/categories');
         if (categoriesResponse.ok) {
-          const categoriesData: ProductsResponse = await categoriesResponse.json();
-          if (categoriesData.products) {
-            const uniqueCategories = Array.from(
-              new Set(categoriesData.products.map(p => p.category.slug))
-            )
-              .map(slug => categoriesData.products.find(p => p.category.slug === slug)?.category)
-              .filter(Boolean) as Array<{ name: string; slug: string }>;
-
-            const formattedCategories = uniqueCategories.slice(0, 4).map(category => ({
-              name: category.name,
-              href: `/products?category=${category.slug}`,
-            }));
+          const categoriesData: CategoriesResponse = await categoriesResponse.json();
+          if (categoriesData.categories) {
+            const formattedCategories = categoriesData.categories
+              .slice(0, 4)
+              .map((category: Category) => ({
+                name: category.name,
+                href: `/products?category=${category.slug}`,
+              }));
             setCategories(formattedCategories);
           }
+        } else {
+          throw new Error('Failed to fetch categories');
         }
       } catch (error) {
         console.error('Error fetching home page data:', error);
+        setError(error instanceof Error ? error.message : 'An error occurred while loading data');
       } finally {
         setIsLoading(false);
       }
@@ -339,56 +320,76 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Error Message */}
+      {error && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-red-900 border border-red-700 text-red-100 px-4 py-3 rounded">
+            <p>Error loading data: {error}</p>
+          </div>
+        </div>
+      )}
+
       {/* Categories Section */}
       <section className="py-16 sm:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center mb-10">Shop by Category</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-6">
-            {categories.map((category, index) => (
-              <Link
-                key={`${category.name}-${index}`}
-                href={category.href}
-                className="group relative block"
-              >
-                <div className="aspect-square w-full overflow-hidden rounded-lg">
-                  <CategoryIcon category={category.name} />
+          {isLoading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-6">
+              {[...Array(4)].map((_, index) => (
+                <div key={index} className="animate-pulse">
+                  <div className="bg-gray-700 h-48 rounded-lg mb-4"></div>
+                  <div className="h-4 bg-gray-700 rounded mb-2"></div>
                 </div>
-                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                  <h3 className="text-white text-lg font-bold text-center p-2">{category.name}</h3>
-                </div>
-              </Link>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-6">
+              {categories.map((category, index) => (
+                <Link key={`${category.name}-${index}`} href={category.href} className="group">
+                  <div className="bg-gray-800 rounded-lg p-6 hover:bg-gray-700 transition-colors">
+                    <div className="h-32 mb-4">
+                      <CategoryIcon category={category.name} />
+                    </div>
+                    <h3 className="text-lg font-semibold text-white text-center group-hover:text-yellow-400 transition-colors">
+                      {category.name}
+                    </h3>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Promotional Banner */}
-      <PromotionalBanner
-        title="Special Construction Sale!"
-        description="Get 20% off on all cement and concrete products this month. Limited time offer - don't miss out on premium building materials at unbeatable prices."
-        ctaText="Shop Sale Items"
-        ctaLink="/products"
-        alignment="center"
-        backgroundImage="https://placehold.co/1600x600/1F2937/FBBF24?text=Construction+Sale"
-      />
-
       {/* Best Sellers Section */}
-      <section className="bg-gray-800 py-16 sm:py-20">
+      <section className="py-16 sm:py-20 bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center mb-10">Best Sellers</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {bestSellers.map(product => (
-              <ProductCard key={product.id} {...product} />
-            ))}
-          </div>
-          <div className="text-center mt-12">
-            <Link
-              href="/products"
-              className="border border-yellow-500 text-yellow-500 font-bold py-3 px-8 rounded-lg hover:bg-yellow-500 hover:text-gray-900 transition-colors"
-            >
-              View All Best Sellers
-            </Link>
-          </div>
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[...Array(4)].map((_, index) => (
+                <div key={index} className="animate-pulse">
+                  <div className="bg-gray-700 h-48 rounded-lg mb-4"></div>
+                  <div className="h-4 bg-gray-700 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-700 rounded w-3/4"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {bestSellers.map(product => (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  name={product.name}
+                  price={product.price}
+                  image={product.imageUrl}
+                  category={product.category.name}
+                  slug={product.slug}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -396,42 +397,59 @@ export default function HomePage() {
       <section className="py-16 sm:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center mb-10">New Arrivals</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {newArrivals.map(product => (
-              <ProductCard key={product.id} {...product} />
-            ))}
-          </div>
-          <div className="text-center mt-12">
-            <Link
-              href="/products"
-              className="bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-lg hover:bg-yellow-400 transition-colors"
-            >
-              View All New Arrivals
-            </Link>
-          </div>
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[...Array(4)].map((_, index) => (
+                <div key={index} className="animate-pulse">
+                  <div className="bg-gray-700 h-48 rounded-lg mb-4"></div>
+                  <div className="h-4 bg-gray-700 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-700 rounded w-3/4"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {newArrivals.map(product => (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  name={product.name}
+                  price={product.price}
+                  image={product.imageUrl}
+                  category={product.category.name}
+                  slug={product.slug}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
       {/* Why Choose Us Section */}
-      <section className="py-16 sm:py-20">
+      <section className="py-16 sm:py-20 bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-12">Why Construction Material Shop?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            <FeatureIcon title="Unmatched Quality" path="M5 13l4 4L19 7">
-              We source only the highest-grade materials, ensuring your projects are durable and
-              safe.
-            </FeatureIcon>
+          <h2 className="text-3xl font-bold text-center mb-10">Why Choose Us</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <FeatureIcon
-              title="Reliable Delivery"
-              path="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+              path="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              title="Quality Guaranteed"
             >
-              Fast, on-time delivery to your job site, keeping your project on schedule.
+              We source only the highest quality construction materials from trusted manufacturers
+              worldwide.
             </FeatureIcon>
             <FeatureIcon
+              path="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+              title="Fast Delivery"
+            >
+              Quick and reliable delivery to your construction site, keeping your project on
+              schedule.
+            </FeatureIcon>
+            <FeatureIcon
+              path="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
               title="Expert Support"
-              path="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2V7a2 2 0 012-2h6l2-2h2l-2 2z"
             >
-              Our experienced team is ready to help you choose the right materials for your needs.
+              Our construction experts are here to help you choose the right materials for your
+              project.
             </FeatureIcon>
           </div>
         </div>

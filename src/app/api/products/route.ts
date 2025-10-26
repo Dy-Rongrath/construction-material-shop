@@ -1,16 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import type { Prisma } from '@prisma/client';
 
-interface ProductWhereClause {
-  category?: { slug: string };
-  slug?: string;
-  OR?: Array<{
-    name?: { contains: string; mode: string };
-    description?: { contains: string; mode: string };
-    brand?: { contains: string; mode: string };
-  }>;
-}
+type ProductWithCategory = Prisma.ProductGetPayload<{
+  include: { category: true };
+}>;
+
+type ProductWhereInput = Prisma.ProductWhereInput;
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,7 +21,7 @@ export async function GET(request: NextRequest) {
     const slug = searchParams.get('slug');
 
     // Build where clause
-    const where: ProductWhereClause = {};
+    const where: ProductWhereInput = {};
 
     if (slug) {
       where.slug = slug;
@@ -59,7 +55,7 @@ export async function GET(request: NextRequest) {
 
     // Get products with category
     const products = await prisma.product.findMany({
-      where: where as any,
+      where,
       include: {
         category: true,
       },
@@ -69,11 +65,10 @@ export async function GET(request: NextRequest) {
     });
 
     // Get total count for pagination
-    const total = await prisma.product.count({ where: where as any });
+    const total = await prisma.product.count({ where });
 
     // Transform products to match frontend interface
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const transformedProducts = products.map((product: any) => ({
+    const transformedProducts = products.map((product: ProductWithCategory) => ({
       id: product.id,
       slug: product.slug,
       name: product.name,
