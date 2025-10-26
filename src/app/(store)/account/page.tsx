@@ -98,7 +98,7 @@ export default function AccountPage() {
         setIsLoading(true);
 
         // Fetch user orders
-        const ordersResponse = await fetch(`/api/orders?userId=${user.id}`);
+        const ordersResponse = await fetch('/api/orders');
         if (ordersResponse.ok) {
           const ordersData = await ordersResponse.json();
           setOrders(ordersData);

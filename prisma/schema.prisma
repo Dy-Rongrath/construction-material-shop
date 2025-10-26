@@ -15,6 +15,7 @@ model User {
   email     String   @unique
   name      String?
   login     String?  // GitHub login
+  password  String?  // Password for email/password authentication
   avatarUrl String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

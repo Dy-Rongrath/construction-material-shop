@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { getSession } from '@/lib/session';
 
 // Protected routes that require authentication
 const protectedRoutes = ['/account', '/checkout', '/order-confirmation'];
@@ -7,12 +8,12 @@ const protectedRoutes = ['/account', '/checkout', '/order-confirmation'];
 // Auth routes that should redirect to home if already authenticated
 const authRoutes = ['/login', '/register'];
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Get the user from cookies
-  const userCookie = request.cookies.get('construction_material_shop_user')?.value;
-  const isAuthenticated = !!userCookie;
+  // Get session from secure HttpOnly cookie
+  const session = await getSession(request);
+  const isAuthenticated = !!session;
 
   // Redirect authenticated users away from auth pages
   if (isAuthenticated && authRoutes.some(route => pathname.startsWith(route))) {
@@ -21,7 +22,7 @@ export function middleware(request: NextRequest) {
 
   // Redirect unauthenticated users to login for protected routes
   if (!isAuthenticated && protectedRoutes.some(route => pathname.startsWith(route))) {
-    const loginUrl = new URL('/auth/login', request.url);
+    const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }

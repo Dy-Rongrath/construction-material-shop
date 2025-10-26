@@ -19,11 +19,7 @@ interface Product {
   inStock: boolean;
   rating: number;
   reviewCount: number;
-  category: {
-    id: string;
-    name: string;
-    slug: string;
-  };
+  category: string;
 }
 
 // Category interface for API response
@@ -384,7 +380,7 @@ export default function HomePage() {
                   name={product.name}
                   price={product.price}
                   image={product.imageUrl}
-                  category={product.category.name}
+                  category={product.category}
                   slug={product.slug}
                 />
               ))}
@@ -416,7 +412,7 @@ export default function HomePage() {
                   name={product.name}
                   price={product.price}
                   image={product.imageUrl}
-                  category={product.category.name}
+                  category={product.category}
                   slug={product.slug}
                 />
               ))}

@@ -49,6 +49,8 @@ export async function GET(request: NextRequest) {
       orderBy.price = order === 'asc' ? 'asc' : 'desc';
     } else if (sort === 'name') {
       orderBy.name = order === 'asc' ? 'asc' : 'desc';
+    } else if (sort === 'id') {
+      orderBy.id = order === 'asc' ? 'asc' : 'desc';
     } else {
       orderBy.createdAt = order === 'asc' ? 'asc' : 'desc';
     }

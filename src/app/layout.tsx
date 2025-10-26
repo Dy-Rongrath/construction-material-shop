@@ -5,6 +5,7 @@ import ClientLayout from '@/components/ClientLayout';
 import { Providers } from '@/components/providers';
 import { ErrorBoundary } from '@/components';
 import { StructuredData } from '@/components/SEO';
+import { PerformanceMonitor, ResourceHints } from '@/components';
 import { generateOrganizationStructuredData } from '@/utils/seo';
 
 const geistSans = Geist({
@@ -101,10 +102,14 @@ export default function RootLayout({
 
   return (
     <html lang="en" className="scroll-smooth" data-scroll-behavior="smooth">
+      <head>
+        <ResourceHints />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-900 text-white min-h-screen flex flex-col`}
       >
         <StructuredData data={organizationData} />
+        <PerformanceMonitor />
         <ErrorBoundary>
           <Providers>
             <ClientLayout>{children}</ClientLayout>

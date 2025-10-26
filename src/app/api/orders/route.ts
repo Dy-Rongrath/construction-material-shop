@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { OrderStatus } from '@prisma/client';
+import { getSession } from '@/lib/session';
 
 interface OrderWhereClause {
   userId?: string;
@@ -9,16 +10,22 @@ interface OrderWhereClause {
 
 export async function GET(request: NextRequest) {
   try {
+    // Get authenticated user from session
+    const session = await getSession(request);
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = session.user.id.toString();
+
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
     const status = searchParams.get('status');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const skip = (page - 1) * limit;
 
-    // Build where clause
-    const where: OrderWhereClause = {};
-    if (userId) where.userId = userId;
+    // Build where clause - always filter by authenticated user
+    const where: OrderWhereClause = { userId };
     if (status) where.status = status as OrderStatus;
 
     // Get orders with items and products
@@ -65,21 +72,20 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { userId, items, total, totalAmount, shippingAddress } = body;
-    const amount = total || totalAmount;
-
-    if (!userId || !items || items.length === 0) {
-      return NextResponse.json({ error: 'Invalid order data' }, { status: 400 });
+    // Get authenticated user from session
+    const session = await getSession(request);
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verify user exists
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+    const userId = session.user.id.toString();
 
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    const body = await request.json();
+    const { items, total, totalAmount, shippingAddress } = body;
+    const amount = total || totalAmount;
+
+    if (!items || items.length === 0) {
+      return NextResponse.json({ error: 'Invalid order data' }, { status: 400 });
     }
 
     // Verify all products exist and are in stock

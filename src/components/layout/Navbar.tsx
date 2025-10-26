@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search, ShoppingCart, Menu, X, UserCircle, LayoutDashboard, LogOut } from 'lucide-react';
@@ -11,9 +11,45 @@ import { useAuth } from '@/lib/auth';
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
   const { state } = useCart();
   const { user, logout } = useAuth();
   const router = useRouter();
+
+  // Close profile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+
+    if (isProfileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isProfileMenuOpen]);
+
+  // Close profile menu on escape key
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isProfileMenuOpen) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+
+    if (isProfileMenuOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isProfileMenuOpen]);
 
   const navLinks = [
     { name: 'Cement', href: '/products?category=cement' },
@@ -95,35 +131,45 @@ export default function Navbar() {
             <div className="hidden lg:flex items-center">
               {user ? (
                 // --- Logged-In View ---
-                <div className="relative group">
-                  <Link
-                    href="/account"
-                    className="p-2 rounded-full hover:bg-gray-700 transition-colors flex items-center"
+                <div className="relative" ref={profileMenuRef}>
+                  <button
+                    onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                    onBlur={() => setTimeout(() => setIsProfileMenuOpen(false), 150)}
+                    className="p-2 rounded-full hover:bg-gray-700 transition-colors flex items-center focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-50"
+                    aria-label="User menu"
+                    aria-expanded={isProfileMenuOpen}
+                    aria-haspopup="true"
                   >
                     <UserCircle size={28} />
-                  </Link>
-                  <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 invisible group-hover:visible">
-                    <div className="py-1">
-                      <Link
-                        href="/account"
-                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-yellow-400"
-                      >
-                        <LayoutDashboard size={16} /> My Account
-                      </Link>
-                      <button
-                        onClick={logout}
-                        className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-gray-700 hover:text-red-300"
-                      >
-                        <LogOut size={16} /> Logout
-                      </button>
+                  </button>
+                  {isProfileMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="py-1">
+                        <Link
+                          href="/account"
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-yellow-400 transition-colors focus:bg-gray-700 focus:text-yellow-400 focus:outline-none"
+                          onClick={() => setIsProfileMenuOpen(false)}
+                        >
+                          <LayoutDashboard size={16} /> My Account
+                        </Link>
+                        <button
+                          onClick={() => {
+                            logout();
+                            setIsProfileMenuOpen(false);
+                          }}
+                          className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-gray-700 hover:text-red-300 transition-colors focus:bg-gray-700 focus:text-red-300 focus:outline-none"
+                        >
+                          <LogOut size={16} /> Logout
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               ) : (
                 // --- Logged-Out View ---
                 <div className="flex items-center space-x-2">
                   <Link
-                    href="/auth/login"
+                    href="/login"
                     className="px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-700 transition-colors cursor-pointer"
                   >
                     Login

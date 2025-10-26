@@ -98,7 +98,6 @@ export default function CheckoutPage() {
     try {
       // Create order via API
       const orderData = {
-        userId: user.id,
         items: cartState.items.map(item => ({
           productId: item.id,
           quantity: item.quantity,

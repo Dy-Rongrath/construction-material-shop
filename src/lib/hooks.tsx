@@ -96,10 +96,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   // API functions
-  const fetchCart = async (userId: string) => {
+  const fetchCart = async () => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
-      const response = await fetch(`/api/cart?userId=${userId}`);
+      const response = await fetch('/api/cart');
       if (!response.ok) throw new Error('Failed to fetch cart');
       const cartData = await response.json();
       dispatch({ type: 'SET_CART', payload: cartData });
@@ -111,13 +111,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const addToCart = async (userId: string, productId: string, quantity: number = 1) => {
+  const addToCart = async (productId: string, quantity: number = 1) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       const response = await fetch('/api/cart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, productId, quantity }),
+        body: JSON.stringify({ productId, quantity }),
       });
       if (!response.ok) throw new Error('Failed to add item to cart');
       const cartData = await response.json();
@@ -130,13 +130,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const updateCartItem = async (userId: string, productId: string, quantity: number) => {
+  const updateCartItem = async (productId: string, quantity: number) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       const response = await fetch('/api/cart', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, productId, quantity }),
+        body: JSON.stringify({ productId, quantity }),
       });
       if (!response.ok) throw new Error('Failed to update cart item');
       const cartData = await response.json();
@@ -149,12 +149,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const removeFromCart = async (userId: string, productId?: string) => {
+  const removeFromCart = async (productId?: string) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
-      const url = productId
-        ? `/api/cart?userId=${userId}&productId=${productId}`
-        : `/api/cart?userId=${userId}`;
+      const url = productId ? `/api/cart?productId=${productId}` : '/api/cart';
       const response = await fetch(url, { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to remove item from cart');
       const cartData = await response.json();
@@ -170,7 +168,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Load cart when user logs in
   useEffect(() => {
     if (user) {
-      fetchCart(user.id.toString());
+      fetchCart();
     } else {
       // Clear cart when user logs out
       dispatch({
@@ -187,20 +185,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    const userId = user.id.toString();
-
     switch (action.type) {
       case 'ADD_ITEM':
-        addToCart(userId, action.payload.id.toString());
+        addToCart(action.payload.id.toString());
         break;
       case 'REMOVE_ITEM':
-        removeFromCart(userId, action.payload.id);
+        removeFromCart(action.payload.id);
         break;
       case 'UPDATE_QUANTITY':
-        updateCartItem(userId, action.payload.id, action.payload.quantity);
+        updateCartItem(action.payload.id, action.payload.quantity);
         break;
       case 'CLEAR_CART':
-        removeFromCart(userId);
+        removeFromCart();
         break;
       default:
         dispatch(action);

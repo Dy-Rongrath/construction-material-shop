@@ -12,8 +12,9 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: () => void;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
   isLoading: boolean;
 }
 
@@ -24,42 +25,80 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in from cookies
-    const cookies = document.cookie.split(';');
-    const userCookie = cookies.find(cookie =>
-      cookie.trim().startsWith('construction_material_shop_user=')
-    );
-
-    if (userCookie) {
+    // Check if user is logged in by calling session API
+    const checkSession = async () => {
       try {
-        const userData = userCookie.split('=')[1];
-        const user = JSON.parse(decodeURIComponent(userData));
-        setUser(user);
+        const response = await fetch('/api/auth/session');
+        if (response.ok) {
+          const sessionData = await response.json();
+          setUser(sessionData.user);
+        }
       } catch (error) {
-        console.error('Error parsing user cookie:', error);
-        // Clear invalid cookie
-        document.cookie =
-          'construction_material_shop_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        console.error('Error checking session:', error);
+      } finally {
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
+    };
+
+    checkSession();
   }, []);
 
-  const login = () => {
-    // Redirect to GitHub OAuth
-    window.location.href = '/api/auth/github';
+  const login = async (email: string, password: string) => {
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || 'Login failed');
+      }
+    } catch (error) {
+      throw error;
+    }
   };
 
-  const logout = () => {
-    setUser(null);
-    // Clear the user cookie
-    document.cookie =
-      'construction_material_shop_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    // Here you could also call an API to invalidate the session
+  const register = async (name: string, email: string, password: string) => {
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || 'Registration failed');
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (error) {
+      console.error('Error during logout:', error);
+    } finally {
+      setUser(null);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
