@@ -1,12 +1,12 @@
 # Construction Material Shop 🏗️
 
-A modern, full-stack e-commerce platform for construction materials built with Next.js 15, React 19, and Prisma. Features a complete product catalog, shopping cart, user authentication, order management, and admin functionality.
+A modern, full-stack e-commerce platform for construction materials built with Next.js 15, React 19, and Prisma. Features a complete product catalog, shopping cart, user authentication, order management, and PDF receipt generation.
 
-![Next.js](https://img.shields.io/badge/Next.js-15.0-black)
-![React](https://img.shields.io/badge/React-19.0-blue)
+![Next.js](https://img.shields.io/badge/Next.js-15.5.4-black)
+![React](https://img.shields.io/badge/React-19.1.0-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
-![Prisma](https://img.shields.io/badge/Prisma-5.0-green)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.0-blue)
+![Prisma](https://img.shields.io/badge/Prisma-6.18.0-green)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4.18-blue)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15.0-blue)
 
 ## ✨ Features
@@ -16,8 +16,9 @@ A modern, full-stack e-commerce platform for construction materials built with N
 - **Product Catalog**: Browse construction materials with categories, search, and filtering
 - **Shopping Cart**: Add/remove items, quantity management, persistent cart
 - **Checkout Process**: Complete order flow with shipping information
-- **Order Management**: View order history and track status
+- **Order Management**: View order history, track status, and download PDF receipts
 - **User Authentication**: GitHub OAuth integration for secure login
+- **Account Management**: User profile management and order history
 
 ### 🔧 Technical Features
 
@@ -28,21 +29,18 @@ A modern, full-stack e-commerce platform for construction materials built with N
 - **Type Safety**: Full TypeScript implementation with strict typing
 - **Database Optimization**: Prisma ORM with PostgreSQL
 - **API Routes**: RESTful API with proper error handling
-
-### 👨‍💼 Admin Features
-
-- **Product Management**: Add, edit, and remove products
-- **Order Management**: View and update order status
-- **User Management**: Manage user accounts and permissions
-- **Analytics Dashboard**: Sales and performance metrics
+- **PDF Generation**: Professional receipt generation with jsPDF
+- **Performance Monitoring**: Built-in performance tracking and optimization
+- **SEO Optimization**: Meta tags, structured data, and sitemap generation
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Node.js 18+
-- PostgreSQL 15+
-- GitHub OAuth App (for authentication)
+- **Node.js 18+** - JavaScript runtime
+- **PostgreSQL 15+** - Database server
+- **GitHub OAuth App** - For user authentication
+- **Git** - Version control system
 
 ### Installation
 
@@ -58,6 +56,8 @@ A modern, full-stack e-commerce platform for construction materials built with N
    ```bash
    npm install
    ```
+
+   This will also automatically generate the Prisma client due to the `postinstall` script.
 
 3. **Set up environment variables**
 
@@ -85,20 +85,24 @@ A modern, full-stack e-commerce platform for construction materials built with N
    VERCEL_URL=your_vercel_url
    ```
 
-4. **Set up the database**
+4. **Set up PostgreSQL database**
+
+   Create a PostgreSQL database named `construction_shop` or update the `DATABASE_URL` accordingly.
+
+5. **Initialize the database**
 
    ```bash
-   # Generate Prisma client
-   npx prisma generate
+   # Generate Prisma client (usually done automatically)
+   npm run db:generate
 
    # Run database migrations
-   npx prisma migrate dev
+   npm run db:migrate
 
    # Seed the database with sample data
-   npx prisma db seed
+   npm run db:seed
    ```
 
-5. **Start the development server**
+6. **Start the development server**
 
    ```bash
    npm run dev
@@ -111,68 +115,83 @@ A modern, full-stack e-commerce platform for construction materials built with N
 ```
 construction-material-shop/
 ├── prisma/
-│   ├── schema.prisma          # Database schema
-│   └── seed.ts               # Database seeding
+│   ├── schema.prisma          # Database schema and models
+│   └── seed.ts               # Database seeding script
 ├── public/
-│   ├── images/               # Static images
+│   ├── images/               # Static images and assets
+│   │   ├── categories/       # Category icons
+│   │   └── logo/            # Logo assets
 │   └── ...                   # Other static assets
 ├── src/
 │   ├── app/                  # Next.js App Router
-│   │   ├── (auth)/          # Authentication pages
-│   │   ├── (store)/         # Store pages (cart, checkout, etc.)
+│   │   ├── (auth)/          # Authentication pages (login/register)
+│   │   ├── (store)/         # Store pages (cart, checkout, account)
 │   │   ├── api/             # API routes
+│   │   │   ├── auth/        # Authentication endpoints
+│   │   │   ├── cart/        # Shopping cart API
+│   │   │   ├── orders/      # Order management API
+│   │   │   ├── products/    # Product catalog API
+│   │   │   └── webhooks/    # Webhook handlers
 │   │   ├── about/           # About page
 │   │   ├── contact/         # Contact page
 │   │   ├── faq/             # FAQ page
 │   │   ├── search/          # Search page
-│   │   └── globals.css      # Global styles
+│   │   ├── sitemap/         # Sitemap generation
+│   │   ├── globals.css      # Global styles
+│   │   └── layout.tsx       # Root layout
 │   ├── components/          # Reusable components
 │   │   ├── ui/             # UI components (Button, Card, etc.)
-│   │   ├── layout/         # Layout components
+│   │   ├── layout/         # Layout components (Navbar, Footer)
 │   │   └── ...             # Other components
-│   ├── features/           # Feature-specific components
-│   │   └── products/       # Product-related components
+│   ├── features/           # Feature-specific modules
+│   │   └── products/       # Product-related components and logic
 │   ├── hooks/              # Custom React hooks
-│   ├── lib/                # Utility libraries
+│   ├── lib/                # Utility libraries and configurations
 │   ├── services/           # API service functions
 │   ├── types/              # TypeScript type definitions
 │   ├── utils/              # Utility functions
 │   └── constants/          # Application constants
 ├── .env.example            # Environment variables template
-├── jest.config.js          # Jest configuration
+├── jest.config.js          # Jest testing configuration
 ├── next.config.js          # Next.js configuration
 ├── tailwind.config.js      # Tailwind CSS configuration
-└── tsconfig.json           # TypeScript configuration
+├── tsconfig.json           # TypeScript configuration
+└── eslint.config.mjs       # ESLint configuration
 ```
 
 ## 🛠️ Tech Stack
 
 ### Frontend
 
-- **Next.js 15** - React framework with App Router
-- **React 19** - UI library with modern hooks
-- **TypeScript** - Type-safe JavaScript
-- **Tailwind CSS** - Utility-first CSS framework
-- **React Query** - Data fetching and caching
-- **React Hook Form** - Form management
-- **Lucide React** - Icon library
+- **Next.js 15.5.4** - React framework with App Router and Turbopack
+- **React 19.1.0** - UI library with modern hooks and concurrent features
+- **TypeScript 5.0** - Type-safe JavaScript with advanced type features
+- **Tailwind CSS 3.4.18** - Utility-first CSS framework
+- **TanStack Query 5.90.5** - Data fetching and caching library
+- **React Hook Form 7.65.0** - Performant forms with easy validation
+- **Lucide React 0.545.0** - Beautiful icon library
+- **React Hot Toast 2.6.0** - Toast notifications
 
 ### Backend
 
-- **Next.js API Routes** - Serverless API endpoints
-- **Prisma** - Database ORM
-- **PostgreSQL** - Primary database
-- **NextAuth.js** - Authentication
-- **GitHub OAuth** - Social authentication
+- **Next.js API Routes** - Serverless API endpoints with middleware
+- **Prisma 6.18.0** - Modern database ORM with type safety
+- **PostgreSQL 15+** - Robust relational database
+- **NextAuth.js** - Complete authentication solution
+- **GitHub OAuth** - Social authentication provider
+- **Zod 4.1.12** - TypeScript-first schema validation
+- **jsPDF 3.0.3** - PDF document generation
+- **html2canvas 1.4.1** - HTML to canvas conversion
 
 ### Development Tools
 
-- **Jest** - Testing framework
-- **React Testing Library** - Component testing
-- **ESLint** - Code linting
-- **Prettier** - Code formatting
-- **Husky** - Git hooks
-- **Commitlint** - Commit message linting
+- **Jest 30.2.0** - Testing framework with jsdom environment
+- **React Testing Library 16.3.0** - Component testing utilities
+- **ESLint 9** - Code linting with security plugins
+- **Prettier 3.6.2** - Code formatting
+- **TypeScript 5.0** - Type checking and compilation
+- **Husky** - Git hooks for quality assurance
+- **tsx 4.20.6** - TypeScript execution for scripts
 
 ## 🧪 Testing
 
@@ -185,40 +204,131 @@ npm test
 # Run tests in watch mode
 npm run test:watch
 
-# Run tests with coverage
+# Run tests with coverage report
 npm run test:coverage
+
+# Run security-related tests
+npm run test:security
 ```
+
+### Test Coverage
+
+The project includes comprehensive testing with:
+
+- **Unit tests** for utility functions and hooks
+- **Component tests** using React Testing Library
+- **Integration tests** for API routes
+- **Security tests** for authentication and authorization
 
 ## 📦 Available Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
+### Development
+
+- `npm run dev` - Start development server with Turbopack
+- `npm run build` - Build for production with Turbopack
+- `npm run build:analyze` - Build with bundle analyzer
 - `npm run start` - Start production server
+- `npm run preview` - Build and start production server
+
+### Code Quality
+
 - `npm run lint` - Run ESLint
+- `npm run lint:fix` - Run ESLint with auto-fix
 - `npm run format` - Format code with Prettier
-- `npm test` - Run tests
+- `npm run format:check` - Check code formatting
 - `npm run type-check` - Run TypeScript type checking
+
+### Database
+
+- `npm run db:generate` - Generate Prisma client
+- `npm run db:migrate` - Run database migrations
+- `npm run db:push` - Push schema changes to database
+- `npm run db:seed` - Seed database with sample data
+- `npm run db:studio` - Open Prisma Studio
+- `npm run db:reset` - Reset database and migrations
+
+### Testing
+
+- `npm test` - Run all tests
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:coverage` - Run tests with coverage report
+- `npm run test:security` - Run security-related tests
+
+### Security & Performance
+
+- `npm run security:audit` - Run security audit
+- `npm run security:headers` - Check security headers
+- `npm run performance:analyze` - Analyze bundle performance
+- `npm run clean` - Clean build artifacts and caches
 
 ## 🚀 Deployment
 
 ### Vercel (Recommended)
 
-1. Connect your GitHub repository to Vercel
-2. Add environment variables in Vercel dashboard
-3. Deploy automatically on push
+1. **Connect your repository**
+   - Sign up/login to [Vercel](https://vercel.com)
+   - Connect your GitHub repository
+   - Import the project
+
+2. **Configure environment variables**
+   - Add all environment variables from `.env.local` in the Vercel dashboard
+   - Set up PostgreSQL database (Vercel Postgres or external provider)
+
+3. **Deploy**
+   - Vercel will automatically deploy on every push to main branch
+   - Custom domain can be configured in Vercel dashboard
+
+### Railway
+
+1. **Set up database**
+   - Create a PostgreSQL database on Railway
+   - Copy the database URL
+
+2. **Deploy application**
+   - Connect GitHub repository to Railway
+   - Add environment variables
+   - Deploy automatically
 
 ### Manual Deployment
 
-1. Build the application:
+1. **Build the application**:
 
    ```bash
    npm run build
    ```
 
-2. Start the production server:
+2. **Start the production server**:
+
    ```bash
    npm start
    ```
+
+3. **Set up reverse proxy** (nginx example):
+
+   ```nginx
+   server {
+       listen 80;
+       server_name your-domain.com;
+
+       location / {
+           proxy_pass http://localhost:3000;
+           proxy_http_version 1.1;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection 'upgrade';
+           proxy_set_header Host $host;
+           proxy_cache_bypass $http_upgrade;
+       }
+   }
+   ```
+
+### Environment Setup
+
+For production, ensure you have:
+
+- **Production database** (not development)
+- **Secure environment variables**
+- **HTTPS certificate** (Let's Encrypt recommended)
+- **Monitoring and logging** setup
 
 ## 🔧 Configuration
 
@@ -226,23 +336,55 @@ npm run test:coverage
 
 The application uses Prisma with PostgreSQL. Key models include:
 
-- **User**: User accounts with GitHub integration
-- **Product**: Construction materials with categories
-- **Category**: Product categories
-- **Order**: Customer orders
-- **OrderItem**: Individual order items
-- **Cart**: Shopping cart items
+- **User**: User accounts with GitHub OAuth integration
+- **Product**: Construction materials with categories, pricing, and specifications
+- **Category**: Product categories with hierarchical structure
+- **Order**: Customer orders with status tracking
+- **OrderItem**: Individual order line items
+- **Cart**: Shopping cart persistence for logged-in users
 
 ### Environment Variables
 
-See `.env.example` for all required environment variables.
+Complete list of required environment variables (see `.env.example`):
+
+```env
+# Database
+DATABASE_URL="postgresql://username:password@host:port/database"
+
+# Authentication
+NEXTAUTH_SECRET="your-secret-key-here"
+NEXTAUTH_URL="http://localhost:3000"
+
+# GitHub OAuth
+GITHUB_CLIENT_ID="your-github-client-id"
+GITHUB_CLIENT_SECRET="your-github-client-secret"
+
+# Optional: Production
+VERCEL_URL="your-production-url"
+```
 
 ### GitHub OAuth Setup
 
-1. Go to GitHub Settings > Developer settings > OAuth Apps
-2. Create a new OAuth App
-3. Set Authorization callback URL to: `http://localhost:3000/api/auth/github`
-4. Copy Client ID and Client Secret to your `.env.local`
+1. **Create OAuth App**:
+   - Go to GitHub Settings → Developer settings → OAuth Apps
+   - Click "New OAuth App"
+
+2. **Configure OAuth App**:
+   - **Application name**: Construction Material Shop
+   - **Homepage URL**: `http://localhost:3000` (or your production URL)
+   - **Authorization callback URL**: `http://localhost:3000/api/auth/github`
+
+3. **Get credentials**:
+   - Copy Client ID and Client Secret
+   - Add to your `.env.local` file
+
+### Security Features
+
+- **Rate limiting** on API endpoints
+- **Helmet.js** security headers
+- **Input validation** with Zod schemas
+- **SQL injection protection** via Prisma ORM
+- **XSS protection** with proper sanitization
 
 ## 🤝 Contributing
 
@@ -265,15 +407,29 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- [Next.js](https://nextjs.org/) - The React framework
-- [Prisma](https://prisma.io/) - Database toolkit
-- [Tailwind CSS](https://tailwindcss.com/) - CSS framework
-- [Vercel](https://vercel.com/) - Deployment platform
+- [Next.js](https://nextjs.org/) - The React framework for production
+- [Prisma](https://prisma.io/) - Next-generation database toolkit
+- [Tailwind CSS](https://tailwindcss.com/) - A utility-first CSS framework
+- [Vercel](https://vercel.com/) - The platform for frontend developers
+- [React](https://reactjs.org/) - A JavaScript library for building user interfaces
+- [TypeScript](https://typescriptlang.org/) - JavaScript with syntax for types
+- [PostgreSQL](https://postgresql.org/) - Advanced open source relational database
+- [jsPDF](https://github.com/parallax/jsPDF) - Client-side PDF generation
+- [TanStack Query](https://tanstack.com/query) - Powerful data synchronization for React
 
 ## 📞 Support
 
-If you have any questions or need help, please open an issue on GitHub or contact the maintainers.
+If you have any questions or need help, please:
+
+- Open an issue on [GitHub](https://github.com/Dy-Rongrath/construction-material-shop/issues)
+- Check the [FAQ](./faq) page
+- Contact the maintainers
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-Built with ❤️ using Next.js and modern web technologies.
+**Last updated**: October 26, 2025  
+Built with ❤️ using Next.js, React, and modern web technologies.
