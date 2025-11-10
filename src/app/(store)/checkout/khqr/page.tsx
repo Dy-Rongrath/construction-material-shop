@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState, Suspense } from 'react';
+import toast from 'react-hot-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -21,12 +22,22 @@ function KhqrContent() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [polling, setPolling] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const POLL_MS = useMemo(() => 4000, []);
   const POLL_TIMEOUT_MS = useMemo(() => 10 * 60 * 1000, []); // 10 minutes
   const [pollStartedAt, setPollStartedAt] = useState<Date | null>(null);
   const [timeoutReached, setTimeoutReached] = useState(false);
+  const [remainingMs, setRemainingMs] = useState<number | null>(null);
+  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+
+  const formatTimeLeft = (ms: number) => {
+    const total = Math.max(0, Math.ceil(ms / 1000));
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return `${m}:${String(s).padStart(2, '0')}`;
+  };
 
   useEffect(() => {
     const loadQr = async () => {
@@ -55,6 +66,43 @@ function KhqrContent() {
     loadQr();
   }, [orderId]);
 
+  // Determine admin for showing admin controls
+  useEffect(() => {
+    const checkAdmin = async () => {
+      try {
+        const res = await fetch('/api/admin/whoami');
+        if (res.ok) {
+          const json = await res.json();
+          setIsAdmin(!!json.isAdmin);
+        }
+      } catch {
+        // ignore
+      }
+    };
+    checkAdmin();
+  }, []);
+
+  // Countdown updater for remaining time
+  useEffect(() => {
+    if (!polling || !pollStartedAt) {
+      setRemainingMs(null);
+      if (countdownRef.current) clearInterval(countdownRef.current);
+      return;
+    }
+
+    const update = () => {
+      const elapsed = Date.now() - pollStartedAt.getTime();
+      const ms = Math.max(0, POLL_TIMEOUT_MS - elapsed);
+      setRemainingMs(ms);
+    };
+
+    update();
+    countdownRef.current = setInterval(update, 1000);
+    return () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+  }, [polling, pollStartedAt, POLL_TIMEOUT_MS]);
+
   // Poll order status and redirect on confirmation
   useEffect(() => {
     if (!orderId || !polling) return;
@@ -65,13 +113,16 @@ function KhqrContent() {
         setTimeoutReached(true);
         return;
       }
-      try {
-        const res = await fetch(`/api/orders/${orderId}`);
+    try {
+      const res = await fetch(`/api/orders/${orderId}`);
         if (res.ok) {
           const order = await res.json();
           setLastChecked(new Date());
           if (String(order.status).toUpperCase() === 'CONFIRMED') {
-            router.push(`/order-confirmation?orderId=${orderId}`);
+            toast.success('Payment confirmed! Redirecting...');
+            setTimeout(() => {
+              router.push(`/order-confirmation?orderId=${orderId}`);
+            }, 800);
           }
         }
       } catch {
@@ -115,6 +166,51 @@ function KhqrContent() {
     );
   }
 
+  const handleCopy = async () => {
+    if (!data) return;
+    try {
+      await navigator.clipboard.writeText(data.payload);
+      toast.success('KHQR payload copied');
+    } catch {
+      toast.error('Failed to copy payload');
+    }
+  };
+
+  const copy = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${label} copied`);
+    } catch {
+      toast.error(`Failed to copy ${label.toLowerCase()}`);
+    }
+  };
+
+  const handleDownloadPng = () => {
+    if (!data) return;
+    try {
+      const a = document.createElement('a');
+      a.href = data.qrDataUrl;
+      a.download = `khqr-${orderId?.slice(-8) || 'order'}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch {
+      toast.error('Failed to download QR');
+    }
+  };
+
+  const handleAdminConfirm = async () => {
+    if (!orderId) return;
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}/confirm`, { method: 'POST' });
+      if (!res.ok) throw new Error('Not authorized or failed');
+      toast.success('Order confirmed');
+      router.push(`/order-confirmation?orderId=${orderId}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to confirm');
+    }
+  };
+
   return (
     <div className="bg-gray-900 text-white min-h-screen py-16">
       <div className="container mx-auto px-6 max-w-2xl">
@@ -122,9 +218,43 @@ function KhqrContent() {
           <h1 className="text-3xl font-extrabold mb-2">Scan to Pay (KHQR)</h1>
           <p className="text-gray-300 mb-6">Order #{orderId?.slice(-8)}</p>
 
-          <div className="bg-white p-4 rounded-md inline-block mb-6">
+          <div className="bg-white p-4 rounded-md inline-block mb-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={data.qrDataUrl} alt="KHQR" className="w-64 h-64" />
+          </div>
+          <div className="mb-6">
+            <button
+              onClick={handleCopy}
+              className="bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold px-3 py-2 rounded"
+            >
+              Copy Payload
+            </button>
+            <div className="mt-3 flex flex-wrap gap-2 justify-center">
+              <button
+                onClick={() => copy(`$${data.amount}`, 'Amount')}
+                className="bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold px-3 py-2 rounded"
+              >
+                Copy Amount
+              </button>
+              <button
+                onClick={() => copy(data.merchant, 'Merchant name')}
+                className="bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold px-3 py-2 rounded"
+              >
+                Copy Merchant
+              </button>
+              <button
+                onClick={() => copy(data.account, 'Account')}
+                className="bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold px-3 py-2 rounded"
+              >
+                Copy Account
+              </button>
+              <button
+                onClick={handleDownloadPng}
+                className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-3 py-2 rounded"
+              >
+                Download QR (PNG)
+              </button>
+            </div>
           </div>
 
           <div className="space-y-1 mb-6">
@@ -150,7 +280,9 @@ function KhqrContent() {
             <div className="text-sm text-gray-400 mt-3">
               {polling ? (
                 <span>
-                  Waiting for payment confirmation{lastChecked ? ` • checked ${lastChecked.toLocaleTimeString()}` : ''}
+                  Waiting for payment confirmation
+                  {lastChecked ? ` • checked ${lastChecked.toLocaleTimeString()}` : ''}
+                  {remainingMs !== null && !timeoutReached ? ` • time left ${formatTimeLeft(remainingMs)}` : ''}
                 </span>
               ) : (
                 <span>{timeoutReached ? 'Polling timed out after 10 minutes' : 'Polling paused'}</span>
@@ -199,6 +331,14 @@ function KhqrContent() {
             >
               Back to Store
             </Link>
+            {isAdmin && (
+              <button
+                onClick={handleAdminConfirm}
+                className="bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-6 rounded-lg"
+              >
+                Mark as Paid (Admin)
+              </button>
+            )}
           </div>
         </div>
       </div>

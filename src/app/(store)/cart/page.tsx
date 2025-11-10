@@ -24,13 +24,19 @@ const CartItem = ({
   item,
   onUpdateQuantity,
   onRemove,
+  updating = false,
 }: {
   item: { id: string; name: string; price: number; quantity: number; imageUrl: string };
   onUpdateQuantity: (id: string, quantity: number) => void;
   onRemove: (id: string) => void;
+  updating?: boolean;
 }) => {
   const handleDecrease = () => {
-    onUpdateQuantity(item.id, item.quantity - 1);
+    if (item.quantity <= 1) {
+      onRemove(item.id);
+    } else {
+      onUpdateQuantity(item.id, item.quantity - 1);
+    }
   };
 
   const handleIncrease = () => {
@@ -58,11 +64,21 @@ const CartItem = ({
       </div>
       <div className="flex items-center gap-4">
         <div className="flex items-center border border-gray-600 rounded-lg">
-          <button onClick={handleDecrease} className="px-3 py-1 hover:bg-gray-700">
+          <button
+            onClick={handleDecrease}
+            disabled={updating || item.quantity <= 1}
+            className={`px-3 py-1 hover:bg-gray-700 ${
+              updating || item.quantity <= 1 ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
             -
           </button>
           <span className="px-4 py-1">{item.quantity}</span>
-          <button onClick={handleIncrease} className="px-3 py-1 hover:bg-gray-700">
+          <button
+            onClick={handleIncrease}
+            disabled={updating}
+            className={`px-3 py-1 hover:bg-gray-700 ${updating ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
             +
           </button>
         </div>
@@ -71,11 +87,17 @@ const CartItem = ({
         </p>
         <button
           onClick={handleRemove}
-          className="text-gray-500 hover:text-red-500 transition-colors"
+          disabled={updating}
+          className={`text-gray-500 hover:text-red-500 transition-colors ${
+            updating ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
         >
           <Icon path="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
         </button>
       </div>
+      {updating && (
+        <div className="w-full text-right text-xs text-gray-400">Updating…</div>
+      )}
     </div>
   );
 };
@@ -85,14 +107,23 @@ export default function CartPage() {
   const { state, dispatch } = useCart();
   const { user } = useAuth();
   const router = useRouter();
+  const [updatingId, setUpdatingId] = React.useState<string | null>(null);
 
   const handleUpdateQuantity = (id: string, quantity: number) => {
+    setUpdatingId(id);
     dispatch({ type: 'UPDATE_QUANTITY', payload: { id, quantity } });
   };
 
   const handleRemoveItem = (id: string) => {
+    setUpdatingId(id);
     dispatch({ type: 'REMOVE_ITEM', payload: { id } });
   };
+
+  React.useEffect(() => {
+    if (!state.isLoading) {
+      setUpdatingId(null);
+    }
+  }, [state.isLoading]);
 
   const handleProceedToCheckout = () => {
     if (state.items.length === 0) return;
@@ -156,6 +187,7 @@ export default function CartPage() {
                     item={item}
                     onUpdateQuantity={handleUpdateQuantity}
                     onRemove={handleRemoveItem}
+                    updating={updatingId === item.id && state.isLoading}
                   />
                 ))}
               </div>

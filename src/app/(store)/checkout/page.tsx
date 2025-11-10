@@ -317,6 +317,12 @@ export default function CheckoutPage() {
                     <span>ACLEDA E-Commerce</span>
                   </label>
                 </div>
+                {((formData as any).paymentMethod !== 'stripe') && (
+                  <p className="mt-3 text-sm text-yellow-400">
+                    Note: Orders paid via KHQR/ABA/AC are marked as <strong>PENDING</strong> until confirmed.
+                    You can monitor confirmation on the QR screen or your order page.
+                  </p>
+                )}
               </section>
 
               <button

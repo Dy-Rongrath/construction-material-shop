@@ -134,8 +134,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateCartItem = async (productId: string, quantity: number) => {
+    // Optimistic update
+    const prev = state;
+    const optimistic: CartState = {
+      ...state,
+      isLoading: true,
+      items: state.items.map((it) => (it.id === productId ? { ...it, quantity } : it)),
+    };
+    optimistic.itemCount = optimistic.items.reduce((s, it) => s + it.quantity, 0);
+    optimistic.total = optimistic.items.reduce((s, it) => s + it.quantity * it.price, 0);
+    dispatch({ type: 'SET_CART', payload: optimistic });
     try {
-      dispatch({ type: 'SET_LOADING', payload: true });
       const response = await fetch('/api/cart', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -146,6 +155,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const cartData = await response.json();
       dispatch({ type: 'SET_CART', payload: cartData });
     } catch (error) {
+      // Revert
+      dispatch({ type: 'SET_CART', payload: { ...prev, isLoading: false } });
       dispatch({
         type: 'SET_ERROR',
         payload: error instanceof Error ? error.message : 'Failed to update cart item',
@@ -154,8 +165,21 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const removeFromCart = async (productId?: string) => {
+    // Optimistic
+    const prev = state;
+    let optimistic: CartState = { ...state, isLoading: true };
+    if (productId) {
+      optimistic = {
+        ...optimistic,
+        items: optimistic.items.filter((it) => it.id !== productId),
+      };
+      optimistic.itemCount = optimistic.items.reduce((s, it) => s + it.quantity, 0);
+      optimistic.total = optimistic.items.reduce((s, it) => s + it.quantity * it.price, 0);
+    } else {
+      optimistic = { ...optimistic, items: [], total: 0, itemCount: 0 };
+    }
+    dispatch({ type: 'SET_CART', payload: optimistic });
     try {
-      dispatch({ type: 'SET_LOADING', payload: true });
       const url = productId ? `/api/cart?productId=${productId}` : '/api/cart';
       const response = await fetch(url, {
         method: 'DELETE',
@@ -165,6 +189,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const cartData = await response.json();
       dispatch({ type: 'SET_CART', payload: cartData });
     } catch (error) {
+      // Revert
+      dispatch({ type: 'SET_CART', payload: { ...prev, isLoading: false } });
       dispatch({
         type: 'SET_ERROR',
         payload: error instanceof Error ? error.message : 'Failed to remove item from cart',

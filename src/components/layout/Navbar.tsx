@@ -16,6 +16,30 @@ export default function Navbar() {
   const { state } = useCart();
   const { user, logout } = useAuth();
   const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function checkAdmin() {
+      try {
+        if (!user) {
+          setIsAdmin(false);
+          return;
+        }
+        const res = await fetch('/api/admin/whoami');
+        if (!cancelled && res.ok) {
+          const json = await res.json();
+          setIsAdmin(!!json.isAdmin);
+        }
+      } catch {
+        if (!cancelled) setIsAdmin(false);
+      }
+    }
+    checkAdmin();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   // Close profile menu when clicking outside
   useEffect(() => {
@@ -145,12 +169,28 @@ export default function Navbar() {
                   {isProfileMenuOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                       <div className="py-1">
+                        {isAdmin && (
+                          <Link
+                            href="/admin/orders"
+                            className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-yellow-400 transition-colors focus:bg-gray-700 focus:text-yellow-400 focus:outline-none"
+                            onClick={() => setIsProfileMenuOpen(false)}
+                          >
+                            <LayoutDashboard size={16} /> Admin Orders
+                          </Link>
+                        )}
                         <Link
                           href="/account"
                           className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-yellow-400 transition-colors focus:bg-gray-700 focus:text-yellow-400 focus:outline-none"
                           onClick={() => setIsProfileMenuOpen(false)}
                         >
                           <LayoutDashboard size={16} /> My Account
+                        </Link>
+                        <Link
+                          href="/account#orders"
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-yellow-400 transition-colors focus:bg-gray-700 focus:text-yellow-400 focus:outline-none"
+                          onClick={() => setIsProfileMenuOpen(false)}
+                        >
+                          <LayoutDashboard size={16} /> My Orders
                         </Link>
                         <button
                           onClick={() => {
@@ -169,7 +209,7 @@ export default function Navbar() {
                 // --- Logged-Out View ---
                 <div className="flex items-center space-x-2">
                   <Link
-                    href="/login"
+                    href="/auth/login"
                     className="px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-700 transition-colors cursor-pointer"
                   >
                     Login
@@ -208,6 +248,14 @@ export default function Navbar() {
           <div className="pt-4 pb-3 border-t border-gray-700">
             {user ? (
               <div className="px-2 space-y-1">
+                {isAdmin && (
+                  <Link
+                    href="/admin/orders"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-yellow-400"
+                  >
+                    Admin Orders
+                  </Link>
+                )}
                 <Link
                   href="/account"
                   className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-yellow-400"

@@ -17,7 +17,7 @@ import {
 const protectedRoutes = ['/account', '/checkout', '/order-confirmation'];
 
 // Auth routes that should redirect to home if already authenticated
-const authRoutes = ['/login', '/register'];
+const authRoutes = ['/auth/login', '/auth/register'];
 
 // API routes that need rate limiting
 // const apiRoutes = ['/api'];
@@ -82,11 +82,33 @@ export async function middleware(request: NextRequest) {
 
   // Redirect unauthenticated users to login for protected routes
   if (!isAuthenticated && protectedRoutes.some(route => pathname.startsWith(route))) {
-    const loginUrl = new URL('/login', request.url);
+    const loginUrl = new URL('/auth/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     const response = NextResponse.redirect(loginUrl);
     applySecurityHeaders(response);
     return response;
+  }
+
+  // Admin guard: redirect non‑admins to home for /admin routes
+  if (pathname.startsWith('/admin')) {
+    if (!isAuthenticated) {
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      const response = NextResponse.redirect(loginUrl);
+      applySecurityHeaders(response);
+      return response;
+    }
+    // Lightweight email check from cookie session
+    const email = session?.user?.email?.toLowerCase?.();
+    const list = (process.env.ADMIN_EMAILS || '')
+      .split(',')
+      .map(e => e.trim().toLowerCase())
+      .filter(Boolean);
+    if (!email || !list.includes(email)) {
+      const response = NextResponse.redirect(new URL('/', request.url));
+      applySecurityHeaders(response);
+      return response;
+    }
   }
 
   // For all other requests, ensure security headers are applied

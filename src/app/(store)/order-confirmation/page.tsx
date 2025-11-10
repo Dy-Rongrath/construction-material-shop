@@ -166,17 +166,26 @@ function OrderConfirmationContent() {
             </div>
             <div className="flex justify-between items-center">
               <span className="font-semibold text-gray-400">Status</span>
-              <span
-                className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                  order.status === 'Delivered'
+              {(() => {
+                const s = String(order.status).toUpperCase();
+                const cls =
+                  s === 'DELIVERED'
                     ? 'bg-green-500/20 text-green-400'
-                    : order.status === 'Shipped'
-                      ? 'bg-blue-500/20 text-blue-400'
-                      : 'bg-yellow-500/20 text-yellow-400'
-                }`}
-              >
-                {order.status}
-              </span>
+                    : s === 'SHIPPED'
+                    ? 'bg-blue-500/20 text-blue-400'
+                    : s === 'CONFIRMED'
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : s === 'PROCESSING'
+                    ? 'bg-indigo-500/20 text-indigo-300'
+                    : s === 'CANCELLED'
+                    ? 'bg-red-500/20 text-red-400'
+                    : 'bg-yellow-500/20 text-yellow-400';
+                return (
+                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${cls}`}>
+                    {s}
+                  </span>
+                );
+              })()}
             </div>
           </div>
 
