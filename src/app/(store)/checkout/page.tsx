@@ -53,9 +53,7 @@ export default function CheckoutPage() {
     city: '',
     state: '',
     zip: '',
-    cardNumber: '',
-    expiry: '',
-    cvc: '',
+    paymentMethod: 'stripe',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -117,10 +115,6 @@ export default function CheckoutPage() {
           state: formData.state,
           zipCode: formData.zip,
         },
-        paymentInfo: {
-          cardNumber: formData.cardNumber.replace(/\s/g, '').slice(-4), // Store only last 4 digits
-          expiry: formData.expiry,
-        },
         total: finalTotal,
       };
 
@@ -136,10 +130,30 @@ export default function CheckoutPage() {
 
       const order = await response.json();
 
-      // Clear cart after successful order
-      cartDispatch({ type: 'CLEAR_CART' });
+      // Start payment by method
+      const method = (formData as any).paymentMethod || 'stripe';
+      if (method === 'stripe') {
+        const payRes = await fetch('/api/payments/stripe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: order.id }),
+        });
+        if (!payRes.ok) throw new Error('Failed to start Stripe checkout');
+        const { url } = await payRes.json();
+        cartDispatch({ type: 'CLEAR_CART' });
+        window.location.href = url;
+        return;
+      }
 
-      // Redirect to order confirmation
+      // KHQR shows QR screen; ABA/AC go to confirmation
+      if (method === 'khqr') {
+        cartDispatch({ type: 'CLEAR_CART' });
+        router.push(`/checkout/khqr?orderId=${order.id}`);
+        return;
+      }
+
+      // Default: ABA/AC pending confirmation
+      cartDispatch({ type: 'CLEAR_CART' });
       router.push(`/order-confirmation?orderId=${order.id}`);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to place order');
@@ -258,38 +272,50 @@ export default function CheckoutPage() {
                 </div>
               </section>
 
-              {/* Payment Details */}
+              {/* Payment Method */}
               <section>
-                <h2 className="text-2xl font-bold mb-6 border-b border-gray-700 pb-3">
-                  Payment Details
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="md:col-span-2">
-                    <FormInput
-                      label="Card Number"
-                      id="cardNumber"
-                      placeholder="•••• •••• •••• ••••"
-                      required
-                      value={formData.cardNumber}
-                      onChange={value => handleInputChange('cardNumber', value)}
+                <h2 className="text-2xl font-bold mb-6 border-b border-gray-700 pb-3">Payment Method</h2>
+                <div className="grid grid-cols-1 gap-4">
+                  <label className="inline-flex items-center gap-3">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="stripe"
+                      checked={(formData as any).paymentMethod === 'stripe'}
+                      onChange={() => handleInputChange('paymentMethod', 'stripe')}
                     />
-                  </div>
-                  <FormInput
-                    label="Expiration Date"
-                    id="expiry"
-                    placeholder="MM / YY"
-                    required
-                    value={formData.expiry}
-                    onChange={value => handleInputChange('expiry', value)}
-                  />
-                  <FormInput
-                    label="CVC"
-                    id="cvc"
-                    placeholder="•••"
-                    required
-                    value={formData.cvc}
-                    onChange={value => handleInputChange('cvc', value)}
-                  />
+                    <span>Stripe (Card)</span>
+                  </label>
+                  <label className="inline-flex items-center gap-3">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="khqr"
+                      checked={(formData as any).paymentMethod === 'khqr'}
+                      onChange={() => handleInputChange('paymentMethod', 'khqr')}
+                    />
+                    <span>KHQR (QR Code)</span>
+                  </label>
+                  <label className="inline-flex items-center gap-3">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="aba"
+                      checked={(formData as any).paymentMethod === 'aba'}
+                      onChange={() => handleInputChange('paymentMethod', 'aba')}
+                    />
+                    <span>ABA PayWay</span>
+                  </label>
+                  <label className="inline-flex items-center gap-3">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="ac"
+                      checked={(formData as any).paymentMethod === 'ac'}
+                      onChange={() => handleInputChange('paymentMethod', 'ac')}
+                    />
+                    <span>ACLEDA E-Commerce</span>
+                  </label>
                 </div>
               </section>
 

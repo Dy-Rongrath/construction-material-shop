@@ -433,3 +433,20 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Last updated**: October 26, 2025  
 Built with ❤️ using Next.js, React, and modern web technologies.
+
+## Payments, Email, and Telegram
+
+- Stripe Checkout
+  - Set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `NEXT_PUBLIC_APP_URL` in `.env`.
+  - Expose the webhook endpoint at `/api/payments/stripe/webhook` in your Stripe dashboard.
+  - On successful payment, the order status updates to `CONFIRMED`, an email is sent to the customer, and a Telegram message is sent to the owner.
+
+- Email
+  - Configure `EMAIL_SMTP_HOST`, `EMAIL_SMTP_PORT`, `EMAIL_SMTP_USER`, `EMAIL_SMTP_PASS`, and `EMAIL_FROM`.
+
+- Telegram
+  - Configure `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` for owner notifications.
+
+- KHQR / ABA / AC
+  - Demo endpoints are available at `/api/payments/khqr`, `/api/payments/aba`, and `/api/payments/ac`.
+  - KHQR returns a QR code data URL for the order amount. ABA/AC return placeholder URLs until live credentials are provided.

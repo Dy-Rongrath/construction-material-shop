@@ -1,11 +1,12 @@
 import type { NextConfig } from 'next';
 
 const CONTENT_SECURITY_POLICY = `default-src 'self';
-  script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com;
+  script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://js.stripe.com;
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   img-src 'self' data: https://images.unsplash.com https://placehold.co;
   font-src 'self' https://fonts.gstatic.com data:;
-  connect-src 'self' https://api.github.com https://*.algolia.net https://www.google-analytics.com;
+  connect-src 'self' https://api.github.com https://*.algolia.net https://www.google-analytics.com https://api.stripe.com;
+  frame-src https://js.stripe.com https://hooks.stripe.com;
   frame-ancestors 'none';
 `;
 
