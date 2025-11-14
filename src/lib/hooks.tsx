@@ -139,7 +139,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const optimistic: CartState = {
       ...state,
       isLoading: true,
-      items: state.items.map((it) => (it.id === productId ? { ...it, quantity } : it)),
+      items: state.items.map(it => (it.id === productId ? { ...it, quantity } : it)),
     };
     optimistic.itemCount = optimistic.items.reduce((s, it) => s + it.quantity, 0);
     optimistic.total = optimistic.items.reduce((s, it) => s + it.quantity * it.price, 0);
@@ -171,7 +171,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (productId) {
       optimistic = {
         ...optimistic,
-        items: optimistic.items.filter((it) => it.id !== productId),
+        items: optimistic.items.filter(it => it.id !== productId),
       };
       optimistic.itemCount = optimistic.items.reduce((s, it) => s + it.quantity, 0);
       optimistic.total = optimistic.items.reduce((s, it) => s + it.quantity * it.price, 0);

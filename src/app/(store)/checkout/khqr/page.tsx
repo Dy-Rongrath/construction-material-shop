@@ -113,8 +113,8 @@ function KhqrContent() {
         setTimeoutReached(true);
         return;
       }
-    try {
-      const res = await fetch(`/api/orders/${orderId}`);
+      try {
+        const res = await fetch(`/api/orders/${orderId}`);
         if (res.ok) {
           const order = await res.json();
           setLastChecked(new Date());
@@ -282,10 +282,14 @@ function KhqrContent() {
                 <span>
                   Waiting for payment confirmation
                   {lastChecked ? ` • checked ${lastChecked.toLocaleTimeString()}` : ''}
-                  {remainingMs !== null && !timeoutReached ? ` • time left ${formatTimeLeft(remainingMs)}` : ''}
+                  {remainingMs !== null && !timeoutReached
+                    ? ` • time left ${formatTimeLeft(remainingMs)}`
+                    : ''}
                 </span>
               ) : (
-                <span>{timeoutReached ? 'Polling timed out after 10 minutes' : 'Polling paused'}</span>
+                <span>
+                  {timeoutReached ? 'Polling timed out after 10 minutes' : 'Polling paused'}
+                </span>
               )}
             </div>
             <div className="mt-3 flex gap-3">

@@ -12,19 +12,20 @@ A modern, full-stack e-commerce app for construction materials built on Next.js 
 
 ## Quick Start
 
-1) Install dependencies
+1. Install dependencies
 
 ```
 npm install
 ```
 
-2) Configure environment
+2. Configure environment
 
 ```
 cp .env.example .env.local
 ```
 
 Fill at minimum:
+
 - `DATABASE_URL`
 - `NEXT_PUBLIC_APP_URL`
 - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
@@ -32,14 +33,14 @@ Fill at minimum:
 - `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` (optional)
 - `ADMIN_EMAILS`
 
-3) Database
+3. Database
 
 ```
 npm run db:migrate
 npm run db:seed
 ```
 
-4) Develop
+4. Develop
 
 ```
 npm run dev

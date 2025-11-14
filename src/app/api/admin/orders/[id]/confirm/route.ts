@@ -8,7 +8,7 @@ function isAdminEmail(email: string | null | undefined): boolean {
   if (!email) return false;
   const list = (process.env.ADMIN_EMAILS || '')
     .split(',')
-    .map((e) => e.trim().toLowerCase())
+    .map(e => e.trim().toLowerCase())
     .filter(Boolean);
   return list.includes(email.toLowerCase());
 }
@@ -36,7 +36,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           id: order.id,
           totalAmount: order.totalAmount,
           createdAt: order.createdAt,
-          items: order.items.map((it) => ({ name: it.product.name, quantity: it.quantity, price: it.price })),
+          items: order.items.map(it => ({
+            name: it.product.name,
+            quantity: it.quantity,
+            price: it.price,
+          })),
           shippingAddress: (order.shippingAddress as any) || null,
         },
       });
@@ -49,7 +53,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const total = order.totalAmount.toFixed(2);
       await sendTelegramMessage(
         `✅ Order confirmed by admin #${order.id.slice(-8)}\nTotal: $${total}\nItems: ${order.items
-          .map((i) => `${i.product.name} x${i.quantity}`)
+          .map(i => `${i.product.name} x${i.quantity}`)
           .join(', ')}`
       );
     } catch (e) {
@@ -62,4 +66,3 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-

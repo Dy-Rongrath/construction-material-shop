@@ -67,7 +67,7 @@ export default function AdminOrdersClient() {
           <div className="flex items-center gap-3">
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={e => setStatusFilter(e.target.value)}
               className="bg-gray-800 border border-gray-700 rounded px-3 py-2"
             >
               <option value="">All</option>
@@ -103,7 +103,7 @@ export default function AdminOrdersClient() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-800">
-                {orders.map((o) => (
+                {orders.map(o => (
                   <tr key={o.id} className="bg-gray-900">
                     <td className="px-4 py-3">
                       <div className="font-semibold">#{o.id.slice(-8)}</div>
@@ -121,14 +121,16 @@ export default function AdminOrdersClient() {
                           o.status === 'CONFIRMED'
                             ? 'bg-green-500/20 text-green-400'
                             : o.status === 'PENDING'
-                            ? 'bg-yellow-500/20 text-yellow-400'
-                            : 'bg-gray-600/30 text-gray-300'
+                              ? 'bg-yellow-500/20 text-yellow-400'
+                              : 'bg-gray-600/30 text-gray-300'
                         }`}
                       >
                         {o.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold">${o.totalAmount.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right font-semibold">
+                      ${o.totalAmount.toFixed(2)}
+                    </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex gap-2 justify-end">
                         <Link
@@ -157,4 +159,3 @@ export default function AdminOrdersClient() {
     </div>
   );
 }
-

@@ -52,8 +52,8 @@ export default function CheckoutPage() {
     address: '',
     city: '',
     state: '',
-    zip: '',
-    paymentMethod: 'stripe',
+    zipCode: '',
+    paymentMethod: 'mock',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -113,7 +113,7 @@ export default function CheckoutPage() {
           address: formData.address,
           city: formData.city,
           state: formData.state,
-          zipCode: formData.zip,
+          zipCode: formData.zipCode,
         },
         total: finalTotal,
       };
@@ -139,6 +139,19 @@ export default function CheckoutPage() {
           body: JSON.stringify({ orderId: order.id }),
         });
         if (!payRes.ok) throw new Error('Failed to start Stripe checkout');
+        const { url } = await payRes.json();
+        cartDispatch({ type: 'CLEAR_CART' });
+        window.location.href = url;
+        return;
+      }
+
+      if (method === 'mock') {
+        const payRes = await fetch('/api/payments/mock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: order.id }),
+        });
+        if (!payRes.ok) throw new Error('Failed to process mock payment');
         const { url } = await payRes.json();
         cartDispatch({ type: 'CLEAR_CART' });
         window.location.href = url;
@@ -263,18 +276,20 @@ export default function CheckoutPage() {
                   />
                   <FormInput
                     label="Zip / Postal Code"
-                    id="zip"
+                    id="zipCode"
                     placeholder="12345"
                     required
-                    value={formData.zip}
-                    onChange={value => handleInputChange('zip', value)}
+                    value={formData.zipCode}
+                    onChange={value => handleInputChange('zipCode', value)}
                   />
                 </div>
               </section>
 
               {/* Payment Method */}
               <section>
-                <h2 className="text-2xl font-bold mb-6 border-b border-gray-700 pb-3">Payment Method</h2>
+                <h2 className="text-2xl font-bold mb-6 border-b border-gray-700 pb-3">
+                  Payment Method
+                </h2>
                 <div className="grid grid-cols-1 gap-4">
                   <label className="inline-flex items-center gap-3">
                     <input
@@ -316,13 +331,24 @@ export default function CheckoutPage() {
                     />
                     <span>ACLEDA E-Commerce</span>
                   </label>
+                  <label className="inline-flex items-center gap-3">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="mock"
+                      checked={(formData as any).paymentMethod === 'mock'}
+                      onChange={() => handleInputChange('paymentMethod', 'mock')}
+                    />
+                    <span>Mock Payment (Development)</span>
+                  </label>
                 </div>
-                {((formData as any).paymentMethod !== 'stripe') && (
-                  <p className="mt-3 text-sm text-yellow-400">
-                    Note: Orders paid via KHQR/ABA/AC are marked as <strong>PENDING</strong> until confirmed.
-                    You can monitor confirmation on the QR screen or your order page.
-                  </p>
-                )}
+                {(formData as any).paymentMethod !== 'stripe' &&
+                  (formData as any).paymentMethod !== 'mock' && (
+                    <p className="mt-3 text-sm text-yellow-400">
+                      Note: Orders paid via KHQR/ABA/AC are marked as <strong>PENDING</strong> until
+                      confirmed. You can monitor confirmation on the QR screen or your order page.
+                    </p>
+                  )}
               </section>
 
               <button

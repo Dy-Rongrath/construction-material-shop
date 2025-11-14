@@ -254,80 +254,80 @@ export default function AccountPage() {
             </InfoCard>
 
             <section id="orders">
-            <InfoCard
-              title="Order History"
-              iconPath="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-            >
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-700">
-                  <thead className="bg-gray-800">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Order ID
-                      </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Date
-                      </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Total
-                      </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-4 py-2"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-gray-800 divide-y divide-gray-700">
-                    {orders.map(order => (
-                      <tr key={order.id}>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
-                          #{order.id.slice(-6)}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
-                          {new Date(order.createdAt).toLocaleDateString()}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
-                          ${order.total.toLocaleString()}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm">
-                          <span
-                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              order.status === 'Delivered'
-                                ? 'bg-green-900 text-green-300'
-                                : order.status === 'Shipped'
-                                  ? 'bg-blue-900 text-blue-300'
-                                  : 'bg-red-900 text-red-300'
-                            }`}
-                          >
-                            {order.status}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex gap-2 justify-end">
-                            <Link
-                              href={`/orders/${order.id}`}
-                              className="text-yellow-400 hover:text-yellow-300"
-                            >
-                              Details
-                            </Link>
-                            <button
-                              onClick={() => handleDownloadReceipt(order.id)}
-                              className="text-blue-400 hover:text-blue-300"
-                              title="Download Receipt"
-                            >
-                              <Icon
-                                path="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                className="w-4 h-4"
-                              />
-                            </button>
-                          </div>
-                        </td>
+              <InfoCard
+                title="Order History"
+                iconPath="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+              >
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-700">
+                    <thead className="bg-gray-800">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                          Order ID
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                          Date
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                          Total
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-4 py-2"></th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </InfoCard>
+                    </thead>
+                    <tbody className="bg-gray-800 divide-y divide-gray-700">
+                      {orders.map(order => (
+                        <tr key={order.id}>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                            #{order.id.slice(-6)}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
+                            {new Date(order.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
+                            ${order.total.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm">
+                            <span
+                              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                order.status === 'Delivered'
+                                  ? 'bg-green-900 text-green-300'
+                                  : order.status === 'Shipped'
+                                    ? 'bg-blue-900 text-blue-300'
+                                    : 'bg-red-900 text-red-300'
+                              }`}
+                            >
+                              {order.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex gap-2 justify-end">
+                              <Link
+                                href={`/orders/${order.id}`}
+                                className="text-yellow-400 hover:text-yellow-300"
+                              >
+                                Details
+                              </Link>
+                              <button
+                                onClick={() => handleDownloadReceipt(order.id)}
+                                className="text-blue-400 hover:text-blue-300"
+                                title="Download Receipt"
+                              >
+                                <Icon
+                                  path="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                  className="w-4 h-4"
+                                />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </InfoCard>
             </section>
           </div>
 
