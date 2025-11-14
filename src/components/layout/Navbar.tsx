@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Search, ShoppingCart, Menu, X, UserCircle, LayoutDashboard, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/lib/hooks';
@@ -97,14 +96,7 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center">
-              <Image
-                src="/images/logo/ShopLogo.png"
-                alt="Construction Material Shop"
-                width={180}
-                height={50}
-                className="h-12 w-auto"
-                priority
-              />
+              <div className="text-2xl font-bold text-yellow-500">Construction Shop</div>
             </Link>
           </div>
 

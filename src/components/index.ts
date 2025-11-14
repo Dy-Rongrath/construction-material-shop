@@ -4,7 +4,7 @@ export { default as Pagination } from './Pagination';
 export { default as ProductGridSkeleton } from './ProductGridSkeleton';
 export { default as Spinner } from './Spinner';
 export { ErrorBoundary, DefaultErrorFallback, useErrorHandler } from './ErrorBoundary';
-export { PerformanceMonitor, ResourceHints } from './PerformanceMonitor';
+export { PerformanceMonitor } from './PerformanceMonitor';
 export {
   LoadingSpinner,
   LoadingText,

@@ -5,7 +5,7 @@ import ClientLayout from '@/components/ClientLayout';
 import { Providers } from '@/components/providers';
 import { ErrorBoundary } from '@/components';
 import { StructuredData } from '@/components/SEO';
-import { PerformanceMonitor, ResourceHints } from '@/components';
+import { PerformanceMonitor } from '@/components';
 import { generateOrganizationStructuredData } from '@/utils/seo';
 
 const geistSans = Geist({
@@ -103,7 +103,13 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth" data-scroll-behavior="smooth">
       <head>
-        <ResourceHints />
+        {/* Preconnect to external domains */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+
+        {/* DNS prefetch for common domains */}
+        <link rel="dns-prefetch" href="//placehold.co" />
+        <link rel="dns-prefetch" href="//images.unsplash.com" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-900 text-white min-h-screen flex flex-col`}

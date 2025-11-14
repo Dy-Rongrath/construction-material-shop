@@ -149,7 +149,6 @@ export function generateOrganizationStructuredData() {
     '@type': 'Organization',
     name: 'Construction Material Shop',
     url: 'https://construction-material-shop.com',
-    logo: 'https://construction-material-shop.com/images/logo/ShopLogo.png',
     description: 'Your trusted source for quality construction materials',
     contactPoint: {
       '@type': 'ContactPoint',
