@@ -1,9 +1,6 @@
-'use client';
-
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useCart } from '@/lib/hooks';
 
 // Database product interface
 interface Product {
@@ -47,7 +44,51 @@ interface CategoriesResponse {
   categories: Category[];
 }
 
-// Reusable Icon component for the "Why Choose Us" section
+// Server-side data fetching functions
+async function fetchBestSellers(): Promise<Product[]> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/products?sort=rating&limit=4`, {
+      cache: 'no-store' // Ensure fresh data
+    });
+    if (!response.ok) throw new Error('Failed to fetch best sellers');
+    const data: ProductsResponse = await response.json();
+    return data.products || [];
+  } catch (error) {
+    console.error('Error fetching best sellers:', error);
+    return [];
+  }
+}
+
+async function fetchNewArrivals(): Promise<Product[]> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/products?sort=id&order=desc&limit=4`, {
+      cache: 'no-store'
+    });
+    if (!response.ok) throw new Error('Failed to fetch new arrivals');
+    const data: ProductsResponse = await response.json();
+    return data.products || [];
+  } catch (error) {
+    console.error('Error fetching new arrivals:', error);
+    return [];
+  }
+}
+
+async function fetchCategories(): Promise<Array<{ name: string; href: string }>> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/categories`, {
+      cache: 'no-store'
+    });
+    if (!response.ok) throw new Error('Failed to fetch categories');
+    const data: CategoriesResponse = await response.json();
+    return data.categories?.slice(0, 4).map((category: Category) => ({
+      name: category.name,
+      href: `/products?category=${category.slug}`,
+    })) || [];
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    return [];
+  }
+}
 const FeatureIcon = ({
   path,
   title,
@@ -172,20 +213,6 @@ const ProductCard = ({
   category: string;
   slug: string;
 }) => {
-  const { dispatch } = useCart();
-
-  const handleAddToCart = () => {
-    dispatch({
-      type: 'ADD_ITEM',
-      payload: {
-        id,
-        name,
-        price,
-        imageUrl: image,
-      },
-    });
-  };
-
   return (
     <div className="bg-gray-800 rounded-lg overflow-hidden group">
       <Link href={`/products/${slug}`} className="block">
@@ -209,84 +236,26 @@ const ProductCard = ({
           >
             View
           </Link>
-          <button
-            onClick={handleAddToCart}
-            className="flex-1 bg-yellow-500 text-gray-900 font-bold py-2 px-3 rounded-md hover:bg-yellow-400 transition-colors text-sm"
+          <Link
+            href={`/products/${slug}`}
+            className="flex-1 bg-yellow-500 text-gray-900 font-bold py-2 px-3 rounded-md hover:bg-yellow-400 transition-colors text-sm text-center"
           >
             Add to Cart
-          </button>
+          </Link>
         </div>
       </div>
     </div>
   );
 };
 
-export default function HomePage() {
-  const [bestSellers, setBestSellers] = useState<Product[]>([]);
-  const [newArrivals, setNewArrivals] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<
-    Array<{
-      name: string;
-      href: string;
-    }>
-  >([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export default async function HomePage() {
+  const [bestSellers, newArrivals, categories] = await Promise.all([
+    fetchBestSellers(),
+    fetchNewArrivals(),
+    fetchCategories(),
+  ]);
 
-  // Fetch data from API
-  useEffect(() => {
-    const fetchHomePageData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        // Fetch best sellers (sort by rating)
-        const bestSellersResponse = await fetch('/api/products?sort=rating&limit=4');
-        if (bestSellersResponse.ok) {
-          const bestSellersData: ProductsResponse = await bestSellersResponse.json();
-          if (bestSellersData.products) {
-            setBestSellers(bestSellersData.products);
-          }
-        } else {
-          throw new Error('Failed to fetch best sellers');
-        }
-
-        // Fetch new arrivals (sort by newest first - assuming higher ID = newer)
-        const newArrivalsResponse = await fetch('/api/products?sort=id&order=desc&limit=4');
-        if (newArrivalsResponse.ok) {
-          const newArrivalsData: ProductsResponse = await newArrivalsResponse.json();
-          if (newArrivalsData.products) {
-            setNewArrivals(newArrivalsData.products);
-          }
-        } else {
-          throw new Error('Failed to fetch new arrivals');
-        }
-
-        // Fetch categories using dedicated endpoint
-        const categoriesResponse = await fetch('/api/categories');
-        if (categoriesResponse.ok) {
-          const categoriesData: CategoriesResponse = await categoriesResponse.json();
-          if (categoriesData.categories) {
-            const formattedCategories = categoriesData.categories
-              .slice(0, 4)
-              .map((category: Category) => ({
-                name: category.name,
-                href: `/products?category=${category.slug}`,
-              }));
-            setCategories(formattedCategories);
-          }
-        } else {
-          throw new Error('Failed to fetch categories');
-        }
-      } catch (error) {
-        setError(error instanceof Error ? error.message : 'An error occurred while loading data');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchHomePageData();
-  }, []);
+  const hasData = bestSellers.length > 0 || newArrivals.length > 0 || categories.length > 0;
 
   return (
     <>
@@ -315,29 +284,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Error Message */}
-      {error && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-red-900 border border-red-700 text-red-100 px-4 py-3 rounded">
-            <p>Error loading data: {error}</p>
-          </div>
-        </div>
-      )}
-
       {/* Categories Section */}
       <section className="py-16 sm:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center mb-10">Shop by Category</h2>
-          {isLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-6">
-              {[...Array(4)].map((_, index) => (
-                <div key={index} className="animate-pulse">
-                  <div className="bg-gray-700 h-48 rounded-lg mb-4"></div>
-                  <div className="h-4 bg-gray-700 rounded mb-2"></div>
-                </div>
-              ))}
-            </div>
-          ) : (
+          {categories.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-6">
               {categories.map((category, index) => (
                 <Link key={`${category.name}-${index}`} href={category.href} className="group">
@@ -352,6 +303,10 @@ export default function HomePage() {
                 </Link>
               ))}
             </div>
+          ) : (
+            <div className="text-center text-gray-400">
+              <p>No categories available at the moment.</p>
+            </div>
           )}
         </div>
       </section>
@@ -360,17 +315,7 @@ export default function HomePage() {
       <section className="py-16 sm:py-20 bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center mb-10">Best Sellers</h2>
-          {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(4)].map((_, index) => (
-                <div key={index} className="animate-pulse">
-                  <div className="bg-gray-700 h-48 rounded-lg mb-4"></div>
-                  <div className="h-4 bg-gray-700 rounded mb-2"></div>
-                  <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-                </div>
-              ))}
-            </div>
-          ) : (
+          {bestSellers.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {bestSellers.map(product => (
                 <ProductCard
@@ -384,6 +329,10 @@ export default function HomePage() {
                 />
               ))}
             </div>
+          ) : (
+            <div className="text-center text-gray-400">
+              <p>No best sellers available at the moment.</p>
+            </div>
           )}
         </div>
       </section>
@@ -392,17 +341,7 @@ export default function HomePage() {
       <section className="py-16 sm:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center mb-10">New Arrivals</h2>
-          {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(4)].map((_, index) => (
-                <div key={index} className="animate-pulse">
-                  <div className="bg-gray-700 h-48 rounded-lg mb-4"></div>
-                  <div className="h-4 bg-gray-700 rounded mb-2"></div>
-                  <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-                </div>
-              ))}
-            </div>
-          ) : (
+          {newArrivals.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {newArrivals.map(product => (
                 <ProductCard
@@ -415,6 +354,10 @@ export default function HomePage() {
                   slug={product.slug}
                 />
               ))}
+            </div>
+          ) : (
+            <div className="text-center text-gray-400">
+              <p>No new arrivals available at the moment.</p>
             </div>
           )}
         </div>
